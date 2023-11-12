@@ -1,4 +1,4 @@
-module eti-assignment1
+module eti-assignment-1
 
 go 1.21.3
 

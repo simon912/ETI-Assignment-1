@@ -41,8 +41,8 @@ func main() {
 	router := mux.NewRouter()
 	//This GET method display all car-pooling trip
 	//router.HandleFunc("/api/v1/carpooling", GetAllCourses).Methods("GET")
-	//This GET & DELETE method retrieves the relevant course information.
-	//router.HandleFunc("/api/v1/courses/{course id}", GetOrDelete).Methods("GET", "DELETE")
+	//This GET method retrieves the relevant course information.
+	router.HandleFunc("/api/v1/user/{username}", GetUser).Methods("GET")
 	//This POST method creates or updates a user
 	router.HandleFunc("/api/v1/user", GetAllUser).Methods("GET")
 	//curl http://localhost:5000/api/v1/user/naruto55 -X POST -d "{\"User Group\":\"Car Owner\", \"First Name\":\"Naruto\", \"Last Name\":\"Uzumaki\", \"Mobile Number\":99987634, \"Email Address\":\"naruto@gmail.com\"}"
@@ -51,7 +51,22 @@ func main() {
 	fmt.Println("Listening at port 5000")
 	log.Fatal(http.ListenAndServe(":5000", router))
 }
-
+func GetUser(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	username := params["username"]
+	user, found := user[username]
+	if r.Method == http.MethodGet { ///test case: curl -X GET http://localhost:5000/api/v1/courses/IT
+		if !found {
+			http.Error(w, "Username does not exist", http.StatusNotFound)
+			return
+		}
+		if user.Usergroup == "Passenger" {
+			fmt.Fprintf(w, "Username: %s\nUser Group: %s\nFirst Name: %s\nLast Name: %s\nMobile Number: %d\nEmail Address: %s\n\n", username, user.Usergroup, user.Firstname, user.Lastname, user.MobileNumber, user.EmailAddr)
+		} else if user.Usergroup == "Car Owner" {
+			fmt.Fprintf(w, "Username: %s\nUser Group: %s\nFirst Name: %s\nLast Name: %s\nMobile Number: %d\nEmail Address: %s\nLicense Number: %d\nPlate Number: %s\n\n", username, user.Usergroup, user.Firstname, user.Lastname, user.MobileNumber, user.EmailAddr, *user.LicenseNo, *user.PlateNo)
+		}
+	}
+}
 func GetAllUser(w http.ResponseWriter, r *http.Request) {
 
 	//test case for retrieve all: curl -X GET http://localhost:5000/api/v1/user
@@ -62,7 +77,6 @@ func GetAllUser(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, "Username: %s\nUser Group: %s\nFirst Name: %s\nLast Name: %s\nMobile Number: %d\nEmail Address: %s\nLicense Number: %d\nPlate Number: %s\n\n", username, user.Usergroup, user.Firstname, user.Lastname, user.MobileNumber, user.EmailAddr, *user.LicenseNo, *user.PlateNo)
 		}
 	}
-
 }
 
 func CreateUser(w http.ResponseWriter, r *http.Request) {

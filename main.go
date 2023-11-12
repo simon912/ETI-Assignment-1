@@ -19,15 +19,23 @@ type userAttribute struct {
 	MobileNumber int    `json:"Mobile Number"`
 	EmailAddr    string `json:"Email Address"`
 	//This attribute will only be used if the User's User Group is Car Owner
-	//LicenseNo int `json:"License Number"`
-	//PlateNo string `json:"Car Plate"`
+	LicenseNo *int    `json:"License Number,omitempty"`
+	PlateNo   *string `json:"Car Plate,omitempty"`
 }
 
 var user = map[string]userAttribute{
-	"john123": {"Passenger", "John", "Doe", 98765432, "john123@gmail.com"},
-	"jane456": {"Car Owner", "Jane", "Doe", 98534243, "janedoe@gmail.com"},
-	"lee44":   {"Passenger", "Bryan", "Lee", 95732952, "bryan@gmail.com"},
-	"tjm95":   {"Car Owner", "Jun Ming", "Tan", 98643435, "tjm@gmail.com"},
+	"john123": {"Passenger", "John", "Doe", 98765432, "john123@gmail.com", nil, nil},
+	"jane456": {"Car Owner", "Jane", "Doe", 98534243, "janedoe@gmail.com", intPtr(103436331), strPtr("SKW22G")},
+	"lee44":   {"Passenger", "Bryan", "Lee", 95732952, "bryan@gmail.com", nil, nil},
+	"tjm95":   {"Car Owner", "Jun Ming", "Tan", 98643435, "tjm@gmail.com", intPtr(104953432), strPtr("SLT45G")},
+}
+
+func intPtr(i int) *int {
+	return &i
+}
+
+func strPtr(s string) *string {
+	return &s
 }
 
 // Register REST endpoint
@@ -61,45 +69,15 @@ func UserInput(prompt string) string {
 	return strings.TrimSpace(input)
 }
 
-/*
-	func GetOrDelete(w http.ResponseWriter, r *http.Request) {
-		params := mux.Vars(r)
-		courseID := params["course id"]
-		course, found := user[courseID]
-		if r.Method == http.MethodGet { ///test case: curl -X GET http://localhost:5000/api/v1/courses/IT
-			if !found {
-				http.Error(w, "Invalid Course ID", http.StatusNotFound)
-				return
-			}
-			fmt.Fprintf(w, "Course Name: %s\nPlanned Intake: %d\nMin GPA: %d\nMax GPA: %d", course.Name, course.PlannedIntake, course.MinGPA, course.MaxGPA)
-		} else if r.Method == http.MethodDelete { //test case: curl -X DELETE http://localhost:5000/api/v1/courses/IT
-			if found {
-				delete(user, courseID)
-				fmt.Fprintf(w, "%s Deleted", courseID)
-			} else {
-				http.Error(w, "Invalid Course ID", http.StatusNotFound)
-			}
-		}
-	}
-*/
-
 func GetAllUser(w http.ResponseWriter, r *http.Request) {
-	/*query := r.URL.Query().Get("q")
-	gpaStr := r.URL.Query().Get("gpa")
-	var gpa int
-	if gpaStr != "" {
-		var err error
-		gpa, err = strconv.Atoi(gpaStr)
-		if err != nil {
-			http.Error(w, "Invalid GPA format", http.StatusBadRequest)
-			return
-		}
-	}*/
-	//Retrieve all courses when there is no query string
+
 	//test case for retrieve all: curl -X GET http://localhost:5000/api/v1/user
 	for username, user := range user {
-		//Return the search results when there is a partial match in the Name
-		fmt.Fprintf(w, "Username: %s\nUser Group: %s\nFirst Name: %s\nLast Name: %s\nMobile Number: %d\nEmail Address: %s\n\n", username, user.Usergroup, user.Firstname, user.Lastname, user.MobileNumber, user.EmailAddr)
+		if user.Usergroup == "Passenger" {
+			fmt.Fprintf(w, "Username: %s\nUser Group: %s\nFirst Name: %s\nLast Name: %s\nMobile Number: %d\nEmail Address: %s\n\n", username, user.Usergroup, user.Firstname, user.Lastname, user.MobileNumber, user.EmailAddr)
+		} else {
+			fmt.Fprintf(w, "Username: %s\nUser Group: %s\nFirst Name: %s\nLast Name: %s\nMobile Number: %d\nEmail Address: %s\nLicense Number: %d\nPlate Number: %s\n\n", username, user.Usergroup, user.Firstname, user.Lastname, user.MobileNumber, user.EmailAddr, *user.LicenseNo, *user.PlateNo)
+		}
 	}
 
 }

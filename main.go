@@ -1,13 +1,10 @@
 package main
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
-	"os"
-	"strings"
 
 	"github.com/gorilla/mux"
 )
@@ -30,6 +27,7 @@ var user = map[string]userAttribute{
 	"tjm95":   {"Car Owner", "Jun Ming", "Tan", 98643435, "tjm@gmail.com", intPtr(104953432), strPtr("SLT45G")},
 }
 
+// helper functions to create pointers for int and string values
 func intPtr(i int) *int {
 	return &i
 }
@@ -53,21 +51,6 @@ func main() {
 	fmt.Println("Listening at port 5000")
 	log.Fatal(http.ListenAndServe(":5000", router))
 }
-func PrintMenu() {
-	fmt.Println("======")
-	fmt.Println("Course Management Console")
-	fmt.Println("1. List all courses")
-	fmt.Println("2. Create new course")
-	fmt.Println("3. Update course")
-	fmt.Println("4. Delete course")
-	fmt.Println("9. Quit")
-}
-func UserInput(prompt string) string {
-	fmt.Print(prompt)
-	reader := bufio.NewReader(os.Stdin)
-	input, _ := reader.ReadString('\n')
-	return strings.TrimSpace(input)
-}
 
 func GetAllUser(w http.ResponseWriter, r *http.Request) {
 
@@ -75,7 +58,7 @@ func GetAllUser(w http.ResponseWriter, r *http.Request) {
 	for username, user := range user {
 		if user.Usergroup == "Passenger" {
 			fmt.Fprintf(w, "Username: %s\nUser Group: %s\nFirst Name: %s\nLast Name: %s\nMobile Number: %d\nEmail Address: %s\n\n", username, user.Usergroup, user.Firstname, user.Lastname, user.MobileNumber, user.EmailAddr)
-		} else {
+		} else if user.Usergroup == "Car Owner" {
 			fmt.Fprintf(w, "Username: %s\nUser Group: %s\nFirst Name: %s\nLast Name: %s\nMobile Number: %d\nEmail Address: %s\nLicense Number: %d\nPlate Number: %s\n\n", username, user.Usergroup, user.Firstname, user.Lastname, user.MobileNumber, user.EmailAddr, *user.LicenseNo, *user.PlateNo)
 		}
 	}
@@ -108,10 +91,10 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 
 func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	courseID := params["username"]
+	username := params["username"]
 
-	// Check if the course ID exists
-	_, found := user[courseID]
+	// Check if the username exists
+	_, found := user[username]
 	if !found {
 		http.Error(w, "Username does not exist", http.StatusNotFound)
 		return
@@ -125,7 +108,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user[courseID] = updatedUser
+	user[username] = updatedUser
 
 	// Status Code 202 - Accepted
 	w.WriteHeader(http.StatusAccepted)

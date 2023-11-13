@@ -5,9 +5,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 )
 
 const baseURL = "http://localhost:5000/api/v1/user"
@@ -18,7 +20,14 @@ func main() {
 		option := readInput("Enter an option: ")
 		switch option {
 		case "1":
-			loginUser()
+			success, userGroup := loginUser()
+			if success {
+				if userGroup == "Passenger" {
+					printPassengerMenu()
+				} else if userGroup == "Car Owner" {
+					printCarOwnerMenu()
+				}
+			}
 		case "2":
 			createNewUser()
 		case "0":
@@ -41,6 +50,45 @@ func printMenu() {
 	fmt.Println("0. Quit")
 }
 
+func printPassengerMenu() {
+	fmt.Println("=================")
+	fmt.Println("Welcome Passenger")
+	fmt.Println("1. blah blah")
+	fmt.Println("2. blah blah")
+	fmt.Println("0. Quit")
+	passengerOption := readInput("Enter an option: ")
+	switch passengerOption {
+	case "1":
+		fmt.Println("Option 1 selected")
+	case "2":
+		fmt.Println("Option 2 selected")
+	case "0":
+		fmt.Println("Returning to the main menu...")
+		return
+	default:
+		fmt.Println("Invalid option, please try again")
+	}
+}
+
+func printCarOwnerMenu() {
+	fmt.Println("=================")
+	fmt.Println("Welcome Car Owner")
+	fmt.Println("1. blah blah")
+	fmt.Println("2. blah blah")
+	fmt.Println("0. Quit")
+	passengerOption := readInput("Enter an option: ")
+	switch passengerOption {
+	case "1":
+		fmt.Println("Option 1 selected")
+	case "2":
+		fmt.Println("Option 2 selected")
+	case "0":
+		fmt.Println("Returning to the main menu...")
+		return
+	default:
+		fmt.Println("Invalid option, please try again")
+	}
+}
 func readInput(prompt string) string {
 	fmt.Print(prompt)
 	scanner := bufio.NewScanner(os.Stdin)
@@ -65,34 +113,52 @@ func listAllUser() {
 	_, _ = coursesBuffer.ReadFrom(response.Body)
 	fmt.Println(coursesBuffer.String())
 }
-func loginUser() {
+func loginUser() (bool, string) {
 	username := readInput("Enter your username: ")
-	userExists, err := checkUserExists(username)
+	userExists, userGroup, err := checkUserExists(username)
 	if err != nil {
 		fmt.Println("Error:", err)
-		return
+		return false, ""
 	}
 	if userExists {
-		fmt.Printf("Welcome, user %s!.\n", username)
+		fmt.Printf("Welcome, user %s!\n", username)
+		return true, userGroup
 	} else {
 		fmt.Printf("User %s does not exist. Please register first.\n", username)
+		return false, ""
 	}
 }
 
 // check if user exists
-func checkUserExists(username string) (bool, error) {
+func checkUserExists(username string) (bool, string, error) {
 	response, err := http.Get(baseURL + "/" + username)
 	if err != nil {
-		return false, err
+		return false, "", err
 	}
 	defer response.Body.Close()
 
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return false, "", err
+	}
 	if response.StatusCode == http.StatusOK {
-		return true, nil
+		userGroupIndex := strings.Index(string(body), "User Group:")
+		if userGroupIndex != -1 {
+			userGroupStart := userGroupIndex + len("User Group:")
+			userGroupEnd := strings.Index(string(body)[userGroupStart:], "\n")
+			if userGroupEnd == -1 {
+				return false, "", fmt.Errorf("User group not found in response")
+			}
+
+			userGroup := strings.TrimSpace(string(body)[userGroupStart : userGroupStart+userGroupEnd])
+			return true, userGroup, nil
+		} else {
+			return false, "", fmt.Errorf("User group not found in response")
+		}
 	} else if response.StatusCode == http.StatusNotFound {
-		return false, nil
+		return false, "", nil
 	} else {
-		return false, fmt.Errorf(response.Status)
+		return false, "", fmt.Errorf("Error: %s", response.Status)
 	}
 }
 

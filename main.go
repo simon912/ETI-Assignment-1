@@ -67,6 +67,7 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 }
+
 func GetAllUser(w http.ResponseWriter, r *http.Request) {
 
 	//test case for retrieve all: curl -X GET http://localhost:5000/api/v1/user

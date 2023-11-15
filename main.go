@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -27,6 +28,20 @@ var user = map[string]userAttribute{
 	"tjm95":   {"Car Owner", "Jun Ming", "Tan", 98643435, "tjm@gmail.com", intPtr(104953432), strPtr("SLT45G")},
 }
 
+type carPoolingTripAttr struct {
+	PickUpLocation      string    `json:"Pick-Up Location"`
+	AltPickUpLocation   *string   `json:"Alternate Pick-Up Location"` // can be nullable
+	StartTravelTime     time.Time `json:"Start Traveling Time"`
+	DestinationLocation string    `json:"Destination Location"`
+	NoPassengers        int       `json:"Number of Passengers Allowed"`
+	Author              string    `json:"Published By"`
+}
+
+var carPoolingTrip = map[int]carPoolingTripAttr{
+	1: {"Ang Mo Kio Road", nil, time.Date(2023, time.November, 13, 10, 30, 0, 0, time.UTC), "Geylang Road", 3, "jane456"},
+	2: {"Bukit Panjang Ring Road", strPtr("Bangkit Road"), time.Date(2023, time.November, 11, 15, 00, 0, 0, time.UTC), "Choa Chu Kang Road", 3, "tjm456"},
+}
+
 // helper functions to create pointers for int and string values
 func intPtr(i int) *int {
 	return &i
@@ -39,8 +54,7 @@ func strPtr(s string) *string {
 // Register REST endpoint
 func main() {
 	router := mux.NewRouter()
-	//This GET method display all car-pooling trip
-	//router.HandleFunc("/api/v1/carpooling", GetAllCourses).Methods("GET")
+	// Endpoint for User
 	//This GET method retrieves the relevant course information.
 	router.HandleFunc("/api/v1/user/{username}", GetUser).Methods("GET")
 	//This POST method creates or updates a user
@@ -48,6 +62,8 @@ func main() {
 	//curl http://localhost:5000/api/v1/user/naruto55 -X POST -d "{\"User Group\":\"Car Owner\", \"First Name\":\"Naruto\", \"Last Name\":\"Uzumaki\", \"Mobile Number\":99987634, \"Email Address\":\"naruto@gmail.com\"}"
 	router.HandleFunc("/api/v1/user/{username}", CreateUser).Methods("POST")
 	router.HandleFunc("/api/v1/user/{username}", UpdateUser).Methods("PUT")
+	// Endpoint for Car-Pooling Trips
+	router.HandleFunc("/api/v1/carpoolingtrip", GetAllTrip).Methods("GET")
 	fmt.Println("Listening at port 5000")
 	log.Fatal(http.ListenAndServe(":5000", router))
 }
@@ -55,7 +71,7 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	username := params["username"]
 	user, found := user[username]
-	if r.Method == http.MethodGet { ///test case: curl -X GET http://localhost:5000/api/v1/courses/IT
+	if r.Method == http.MethodGet {
 		if !found {
 			http.Error(w, "Username does not exist", http.StatusNotFound)
 			return
@@ -128,4 +144,17 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	// Status Code 202 - Accepted
 	w.WriteHeader(http.StatusAccepted)
 	fmt.Fprintf(w, "User info has been updated\n")
+}
+
+func GetAllTrip(w http.ResponseWriter, r *http.Request) {
+	//test case for retrieve all: curl -X GET http://localhost:5000/api/v1/carpoolingtrip
+	for tripid, carPoolingTrip := range carPoolingTrip {
+		startTime := carPoolingTrip.StartTravelTime.Format("2006-01-02 15:04:05 MST")
+		altPickUpLocation := ""
+		if carPoolingTrip.AltPickUpLocation != nil {
+			altPickUpLocation = *carPoolingTrip.AltPickUpLocation
+		}
+
+		fmt.Fprintf(w, "Trip ID: %d\nPick-Up Location: %s\nAlternate Pick-Up Location: %s\nStarting Traveling Time: %s\nDestination Location: %s\nNumber of Passengers: %d\nPublished By: %s\n\n", tripid, carPoolingTrip.PickUpLocation, altPickUpLocation, startTime, carPoolingTrip.DestinationLocation, carPoolingTrip.NoPassengers, carPoolingTrip.Author)
+	}
 }

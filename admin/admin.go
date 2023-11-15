@@ -53,9 +53,11 @@ func printMenu() {
 func printPassengerMenu() {
 	fmt.Println("=================")
 	fmt.Println("Welcome Passenger")
-	fmt.Println("1. blah blah")
-	fmt.Println("2. blah blah")
-	fmt.Println("0. Quit")
+	fmt.Println("1. Change to Car Owner")
+	fmt.Println("2. Update Profile")
+	fmt.Println("4. Browse Car-Pooling Trips")
+	fmt.Println("3. Delete Profile")
+	fmt.Println("0. Logout")
 	passengerOption := readInput("Enter an option: ")
 	switch passengerOption {
 	case "1":
@@ -63,7 +65,7 @@ func printPassengerMenu() {
 	case "2":
 		fmt.Println("Option 2 selected")
 	case "0":
-		fmt.Println("Returning to the main menu...")
+		fmt.Println("Logging out...")
 		return
 	default:
 		fmt.Println("Invalid option, please try again")
@@ -73,9 +75,9 @@ func printPassengerMenu() {
 func printCarOwnerMenu() {
 	fmt.Println("=================")
 	fmt.Println("Welcome Car Owner")
-	fmt.Println("1. blah blah")
-	fmt.Println("2. blah blah")
-	fmt.Println("0. Quit")
+	fmt.Println("1. Publish Car-Pooling Trips")
+	fmt.Println("2. Manage Car-Pooling Trips")
+	fmt.Println("0. Logout")
 	passengerOption := readInput("Enter an option: ")
 	switch passengerOption {
 	case "1":
@@ -83,7 +85,7 @@ func printCarOwnerMenu() {
 	case "2":
 		fmt.Println("Option 2 selected")
 	case "0":
-		fmt.Println("Returning to the main menu...")
+		fmt.Println("Logging out...")
 		return
 	default:
 		fmt.Println("Invalid option, please try again")

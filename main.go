@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -64,9 +65,12 @@ func main() {
 	router.HandleFunc("/api/v1/user/{username}", UpdateUser).Methods("PUT")
 	// Endpoint for Car-Pooling Trips
 	router.HandleFunc("/api/v1/carpoolingtrip", GetAllTrip).Methods("GET")
+	router.HandleFunc("/api/v1/carpoolingtrip/{tripid}", PublishTrip).Methods("POST")
 	fmt.Println("Listening at port 5000")
 	log.Fatal(http.ListenAndServe(":5000", router))
 }
+
+// ----------------------------- Endpoint for User ----------------------------------------
 func GetUser(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	username := params["username"]
@@ -146,6 +150,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "User info has been updated\n")
 }
 
+// ----------------------------- Endpoint for Car Pooling Trips ----------------------------------------
 func GetAllTrip(w http.ResponseWriter, r *http.Request) {
 	//test case for retrieve all: curl -X GET http://localhost:5000/api/v1/carpoolingtrip
 	for tripid, carPoolingTrip := range carPoolingTrip {
@@ -157,4 +162,36 @@ func GetAllTrip(w http.ResponseWriter, r *http.Request) {
 
 		fmt.Fprintf(w, "Trip ID: %d\nPick-Up Location: %s\nAlternate Pick-Up Location: %s\nStarting Traveling Time: %s\nDestination Location: %s\nNumber of Passengers: %d\nPublished By: %s\n\n", tripid, carPoolingTrip.PickUpLocation, altPickUpLocation, startTime, carPoolingTrip.DestinationLocation, carPoolingTrip.NoPassengers, carPoolingTrip.Author)
 	}
+}
+
+// for Car Owner only
+// curl http://localhost:5000/api/v1/carpoolingtrip/3 -X POST -d "{\"Pick-Up Location\":\"Choa Chu Kang Road\", \"Alternate Pick-Up Location\":\"\", \"Start Traveling Time\":\"2023-11-13T10:30:00Z\", \"Destination Location\":\"Bukit Timah Road\", \"Number of Passengers Allowed\":4, \"Published By\":\"jane456\"}"
+func PublishTrip(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	tripid := params["tripid"]
+
+	//convert tripid to int
+	tripidInt, err := strconv.Atoi(tripid)
+	if err != nil {
+		http.Error(w, "Invalid trip ID", http.StatusBadRequest)
+		return
+	}
+	_, found := carPoolingTrip[tripidInt]
+	if found {
+		http.Error(w, "This car pooling trip already exist", http.StatusConflict)
+		return
+	}
+
+	var newTrip carPoolingTripAttr
+	err = json.NewDecoder(r.Body).Decode(&newTrip)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	carPoolingTrip[tripidInt] = carPoolingTripAttr(newTrip)
+
+	// status code 201 - Created
+	w.WriteHeader(http.StatusAccepted)
+	fmt.Fprintf(w, "Your car publishing trip ID %s has been registered!\n", tripid)
 }

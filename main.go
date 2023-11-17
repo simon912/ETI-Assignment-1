@@ -134,7 +134,6 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Username does not exist", http.StatusNotFound)
 		return
 	}
-
 	// Decode the incoming JSON data to update the course
 	var updatedUser userAttribute
 	err := json.NewDecoder(r.Body).Decode(&updatedUser)
@@ -142,9 +141,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
 	user[username] = updatedUser
-
 	// Status Code 202 - Accepted
 	w.WriteHeader(http.StatusAccepted)
 	fmt.Fprintf(w, "User info has been updated\n")
@@ -159,7 +156,6 @@ func GetAllTrip(w http.ResponseWriter, r *http.Request) {
 		if carPoolingTrip.AltPickUpLocation != nil {
 			altPickUpLocation = *carPoolingTrip.AltPickUpLocation
 		}
-
 		fmt.Fprintf(w, "Trip ID: %d\nPick-Up Location: %s\nAlternate Pick-Up Location: %s\nStarting Traveling Time: %s\nDestination Location: %s\nNumber of Passengers: %d\nPublished By: %s\n\n", tripid, carPoolingTrip.PickUpLocation, altPickUpLocation, startTime, carPoolingTrip.DestinationLocation, carPoolingTrip.NoPassengers, carPoolingTrip.Author)
 	}
 }

@@ -12,7 +12,8 @@ import (
 	"strings"
 )
 
-const baseURL = "http://localhost:5000/api/v1/user"
+const userURL = "http://localhost:5000/api/v1/user"
+const tripURL = "http://localhost:5000/api/v1/carpoolingtrip"
 
 func main() {
 	for {
@@ -55,8 +56,8 @@ func printPassengerMenu() {
 	fmt.Println("Welcome Passenger")
 	fmt.Println("1. Change to Car Owner")
 	fmt.Println("2. Update Profile")
-	fmt.Println("4. Browse Car-Pooling Trips")
-	fmt.Println("3. Delete Profile")
+	fmt.Println("3. Browse Car-Pooling Trips")
+	fmt.Println("4. Delete Profile")
 	fmt.Println("0. Logout")
 	passengerOption := readInput("Enter an option: ")
 	switch passengerOption {
@@ -64,6 +65,9 @@ func printPassengerMenu() {
 		fmt.Println("Option 1 selected")
 	case "2":
 		fmt.Println("Option 2 selected")
+	case "3":
+		listAllTrip()
+		printPassengerMenu()
 	case "0":
 		fmt.Println("Logging out...")
 		return
@@ -98,8 +102,9 @@ func readInput(prompt string) string {
 	return scanner.Text()
 }
 
+// ------------------------------- User ---------------------------------
 func listAllUser() {
-	response, err := http.Get(baseURL)
+	response, err := http.Get(userURL)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
@@ -115,6 +120,7 @@ func listAllUser() {
 	_, _ = coursesBuffer.ReadFrom(response.Body)
 	fmt.Println(coursesBuffer.String())
 }
+
 func loginUser() (bool, string) {
 	username := readInput("Enter your username: ")
 	userExists, userGroup, err := checkUserExists(username)
@@ -133,7 +139,7 @@ func loginUser() (bool, string) {
 
 // check if user exists
 func checkUserExists(username string) (bool, string, error) {
-	response, err := http.Get(baseURL + "/" + username)
+	response, err := http.Get(userURL + "/" + username)
 	if err != nil {
 		return false, "", err
 	}
@@ -149,18 +155,18 @@ func checkUserExists(username string) (bool, string, error) {
 			userGroupStart := userGroupIndex + len("User Group:")
 			userGroupEnd := strings.Index(string(body)[userGroupStart:], "\n")
 			if userGroupEnd == -1 {
-				return false, "", fmt.Errorf("User group not found in response")
+				return false, "", fmt.Errorf("user group not found in response")
 			}
 
 			userGroup := strings.TrimSpace(string(body)[userGroupStart : userGroupStart+userGroupEnd])
 			return true, userGroup, nil
 		} else {
-			return false, "", fmt.Errorf("User group not found in response")
+			return false, "", fmt.Errorf("user group not found in response")
 		}
 	} else if response.StatusCode == http.StatusNotFound {
 		return false, "", nil
 	} else {
-		return false, "", fmt.Errorf("Error: %s", response.Status)
+		return false, "", fmt.Errorf("error: %s", response.Status)
 	}
 }
 
@@ -188,7 +194,7 @@ func createNewUser() {
 		return
 	}
 
-	response, err := http.Post(baseURL+"/"+username, "application/json", bytes.NewBuffer(postData))
+	response, err := http.Post(userURL+"/"+username, "application/json", bytes.NewBuffer(postData))
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
@@ -205,77 +211,21 @@ func createNewUser() {
 
 }
 
-/*
-func updateCourse() {
-	courseID := readInput("Enter Course ID: ")
-	name := readInput("Enter Course Name: ")
-	plannedIntake := readInput("Enter Planned Intake: ")
-	minGPA := readInput("Enter Min GPA: ")
-	maxGPA := readInput("Enter Max GPA: ")
-
-	IntplannedIntake, _ := strconv.Atoi(plannedIntake)
-	IntminGPA, _ := strconv.Atoi(minGPA)
-	IntmaxGPA, _ := strconv.Atoi(maxGPA)
-
-	updatedCourse := map[string]interface{}{
-		"Name":           name,
-		"Planned Intake": IntplannedIntake,
-		"Min GPA":        IntminGPA,
-		"Max GPA":        IntmaxGPA,
-	}
-
-	putData, err := json.Marshal(updatedCourse)
-	if err != nil {
-		fmt.Println("Error:", err)
-		return
-	}
-
-	request, err := http.NewRequest(http.MethodPut, baseURL+"/"+courseID, bytes.NewBuffer(putData))
-	if err != nil {
-		fmt.Println("Error:", err)
-		return
-	}
-	request.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{}
-	response, err := client.Do(request)
+// --------------------------- Car Pooling Trip ---------------------------
+func listAllTrip() {
+	response, err := http.Get(tripURL)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
 	}
 	defer response.Body.Close()
 
-	if response.StatusCode == http.StatusAccepted {
-		fmt.Println("Course updated successfully.")
-	} else if response.StatusCode == http.StatusNotFound {
-		fmt.Printf("Error - Course %s does not exist\n", courseID)
-	} else {
+	if response.StatusCode != http.StatusOK {
 		fmt.Println("Error:", response.Status)
-	}
-}
-*/
-/*
-func deleteCourse() {
-	courseID := readInput("Enter Course ID: ")
-
-	request, err := http.NewRequest(http.MethodDelete, baseURL+"/"+courseID, nil)
-	if err != nil {
-		fmt.Println("Error:", err)
 		return
 	}
 
-	client := &http.Client{}
-	response, err := client.Do(request)
-	if err != nil {
-		fmt.Println("Error:", err)
-		return
-	}
-	defer response.Body.Close()
-
-	if response.StatusCode == http.StatusOK {
-		fmt.Println("Course deleted successfully.")
-	} else {
-		fmt.Println("Error:", response.Status)
-	}
+	var coursesBuffer bytes.Buffer
+	_, _ = coursesBuffer.ReadFrom(response.Body)
+	fmt.Println(coursesBuffer.String())
 }
-*/

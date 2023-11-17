@@ -63,6 +63,8 @@ func main() {
 	//curl http://localhost:5000/api/v1/user/naruto55 -X POST -d "{\"User Group\":\"Car Owner\", \"First Name\":\"Naruto\", \"Last Name\":\"Uzumaki\", \"Mobile Number\":99987634, \"Email Address\":\"naruto@gmail.com\"}"
 	router.HandleFunc("/api/v1/user/{username}", CreateUser).Methods("POST")
 	router.HandleFunc("/api/v1/user/{username}", UpdateUser).Methods("PUT")
+	// test case: curl http://localhost:5000/api/v1/user/john123/changecarowner -X POST -d "{\"License Number\": 111123335, \"Car Plate\": \"ABC123\"}"
+	router.HandleFunc("/api/v1/user/{username}/changecarowner", ChangeToCarOwner).Methods("POST")
 	// Endpoint for Car-Pooling Trips
 	router.HandleFunc("/api/v1/carpoolingtrip", GetAllTrip).Methods("GET")
 	router.HandleFunc("/api/v1/carpoolingtrip/{tripid}", PublishTrip).Methods("POST")
@@ -145,6 +147,42 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	// Status Code 202 - Accepted
 	w.WriteHeader(http.StatusAccepted)
 	fmt.Fprintf(w, "User info has been updated\n")
+}
+
+func ChangeToCarOwner(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	username := params["username"]
+	currentUser := user[username]
+	if currentUser.Usergroup == "Car Owner" {
+		http.Error(w, "User is a Car Owner!", http.StatusBadRequest)
+		return
+	}
+	// Decode the incoming JSON data to update the user to a Car Owner
+	var carOwnerUpdate struct {
+		LicenseNo *int    `json:"License Number"`
+		PlateNo   *string `json:"Car Plate"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&carOwnerUpdate)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Update the user to a Car Owner
+	newUser := userAttribute{
+		Usergroup:    "Car Owner",
+		Firstname:    currentUser.Firstname,
+		Lastname:     currentUser.Lastname,
+		MobileNumber: currentUser.MobileNumber,
+		EmailAddr:    currentUser.EmailAddr,
+		LicenseNo:    carOwnerUpdate.LicenseNo,
+		PlateNo:      carOwnerUpdate.PlateNo,
+	}
+	user[username] = newUser
+	// Status Code 202 - Accepted
+	w.WriteHeader(http.StatusAccepted)
+	fmt.Fprintf(w, "User %s has been updated to a Car Owner\n", username)
 }
 
 // ----------------------------- Endpoint for Car Pooling Trips ----------------------------------------

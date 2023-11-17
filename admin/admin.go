@@ -211,6 +211,10 @@ func createNewUser() {
 
 }
 
+func changeToCarOwner() {
+	
+}
+
 // --------------------------- Car Pooling Trip ---------------------------
 func listAllTrip() {
 	response, err := http.Get(tripURL)

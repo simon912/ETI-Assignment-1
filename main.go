@@ -64,7 +64,8 @@ func main() {
 	router.HandleFunc("/api/v1/user/{username}", CreateUser).Methods("POST")
 	router.HandleFunc("/api/v1/user/{username}", UpdateUser).Methods("PUT")
 	// test case: curl http://localhost:5000/api/v1/user/john123/changecarowner -X POST -d "{\"License Number\": 111123335, \"Car Plate\": \"ABC123\"}"
-	router.HandleFunc("/api/v1/user/{username}/changecarowner", ChangeToCarOwner).Methods("POST")
+	router.HandleFunc("/api/v1/user/{username}/changecarowner", ChangeToCarOwner).Methods("PUT")
+
 	// Endpoint for Car-Pooling Trips
 	router.HandleFunc("/api/v1/carpoolingtrip", GetAllTrip).Methods("GET")
 	router.HandleFunc("/api/v1/carpoolingtrip/{tripid}", PublishTrip).Methods("POST")
@@ -76,16 +77,26 @@ func main() {
 func GetUser(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	username := params["username"]
-	user, found := user[username]
+	currentUser, found := user[username]
 	if r.Method == http.MethodGet {
 		if !found {
 			http.Error(w, "Username does not exist", http.StatusNotFound)
 			return
 		}
-		if user.Usergroup == "Passenger" {
-			fmt.Fprintf(w, "Username: %s\nUser Group: %s\nFirst Name: %s\nLast Name: %s\nMobile Number: %d\nEmail Address: %s\n\n", username, user.Usergroup, user.Firstname, user.Lastname, user.MobileNumber, user.EmailAddr)
-		} else if user.Usergroup == "Car Owner" {
-			fmt.Fprintf(w, "Username: %s\nUser Group: %s\nFirst Name: %s\nLast Name: %s\nMobile Number: %d\nEmail Address: %s\nLicense Number: %d\nPlate Number: %s\n\n", username, user.Usergroup, user.Firstname, user.Lastname, user.MobileNumber, user.EmailAddr, *user.LicenseNo, *user.PlateNo)
+		if currentUser.Usergroup == "Passenger" {
+			fmt.Fprintf(w, "Username: %s\nUser Group: %s\nFirst Name: %s\nLast Name: %s\nMobile Number: %d\nEmail Address: %s\n\n", username, currentUser.Usergroup, currentUser.Firstname, currentUser.Lastname, currentUser.MobileNumber, currentUser.EmailAddr)
+		} else if currentUser.Usergroup == "Car Owner" {
+			fmt.Fprintf(w, "Username: %s\nUser Group: %s\nFirst Name: %s\nLast Name: %s\nMobile Number: %d\nEmail Address: %s\n", username, currentUser.Usergroup, currentUser.Firstname, currentUser.Lastname, currentUser.MobileNumber, currentUser.EmailAddr)
+
+			// Check if LicenseNo and PlateNo are not nil before dereferencing
+			if currentUser.LicenseNo != nil {
+				fmt.Fprintf(w, "License Number: %d\n", *currentUser.LicenseNo)
+			}
+			if currentUser.PlateNo != nil {
+				fmt.Fprintf(w, "Plate Number: %s\n", *currentUser.PlateNo)
+			}
+
+			fmt.Fprintf(w, "\n")
 		}
 	}
 }
@@ -97,7 +108,14 @@ func GetAllUser(w http.ResponseWriter, r *http.Request) {
 		if user.Usergroup == "Passenger" {
 			fmt.Fprintf(w, "Username: %s\nUser Group: %s\nFirst Name: %s\nLast Name: %s\nMobile Number: %d\nEmail Address: %s\n\n", username, user.Usergroup, user.Firstname, user.Lastname, user.MobileNumber, user.EmailAddr)
 		} else if user.Usergroup == "Car Owner" {
-			fmt.Fprintf(w, "Username: %s\nUser Group: %s\nFirst Name: %s\nLast Name: %s\nMobile Number: %d\nEmail Address: %s\nLicense Number: %d\nPlate Number: %s\n\n", username, user.Usergroup, user.Firstname, user.Lastname, user.MobileNumber, user.EmailAddr, *user.LicenseNo, *user.PlateNo)
+			fmt.Fprintf(w, "Username: %s\nUser Group: %s\nFirst Name: %s\nLast Name: %s\nMobile Number: %d\nEmail Address: %s\n", username, user.Usergroup, user.Firstname, user.Lastname, user.MobileNumber, user.EmailAddr)
+			if user.LicenseNo != nil {
+				fmt.Fprintf(w, "License Number: %d\n", *user.LicenseNo)
+			}
+			if user.PlateNo != nil {
+				fmt.Fprintf(w, "Plate Number: %s\n", *user.PlateNo)
+			}
+			fmt.Fprintf(w, "\n")
 		}
 	}
 }

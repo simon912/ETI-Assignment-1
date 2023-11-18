@@ -16,17 +16,19 @@ const userURL = "http://localhost:5000/api/v1/user"
 const tripURL = "http://localhost:5000/api/v1/carpoolingtrip"
 
 func main() {
+	var currentUsername string
 	for {
 		printMenu()
 		option := readInput("Enter an option: ")
 		switch option {
 		case "1":
-			success, userGroup := loginUser()
+			success, username, userGroup := loginUser()
 			if success {
+				currentUsername = username
 				if userGroup == "Passenger" {
-					printPassengerMenu()
+					printPassengerMenu(currentUsername)
 				} else if userGroup == "Car Owner" {
-					printCarOwnerMenu()
+					printCarOwnerMenu(currentUsername)
 				}
 			}
 		case "2":
@@ -44,14 +46,14 @@ func main() {
 
 func printMenu() {
 	fmt.Println("=================")
-	fmt.Println("Welcome to the Commnity Car-Pooling Platform")
+	fmt.Println("Welcome to the Community Car-Pooling Platform")
 	fmt.Println("1. Login")
 	fmt.Println("2. Register")
 	fmt.Println("9. Get All User (For Testing Purpose)")
 	fmt.Println("0. Quit")
 }
 
-func printPassengerMenu() {
+func printPassengerMenu(username string) {
 	fmt.Println("=================")
 	fmt.Println("Welcome Passenger")
 	fmt.Println("1. Change to Car Owner")
@@ -62,12 +64,13 @@ func printPassengerMenu() {
 	passengerOption := readInput("Enter an option: ")
 	switch passengerOption {
 	case "1":
-		fmt.Println("Option 1 selected")
+		changeToCarOwner(username)
+		return
 	case "2":
 		fmt.Println("Option 2 selected")
 	case "3":
 		listAllTrip()
-		printPassengerMenu()
+		printPassengerMenu(username)
 	case "0":
 		fmt.Println("Logging out...")
 		return
@@ -76,7 +79,7 @@ func printPassengerMenu() {
 	}
 }
 
-func printCarOwnerMenu() {
+func printCarOwnerMenu(username string) {
 	fmt.Println("=================")
 	fmt.Println("Welcome Car Owner")
 	fmt.Println("1. Publish Car-Pooling Trips")
@@ -121,19 +124,19 @@ func listAllUser() {
 	fmt.Println(coursesBuffer.String())
 }
 
-func loginUser() (bool, string) {
+func loginUser() (bool, string, string) {
 	username := readInput("Enter your username: ")
 	userExists, userGroup, err := checkUserExists(username)
 	if err != nil {
 		fmt.Println("Error:", err)
-		return false, ""
+		return false, "", ""
 	}
 	if userExists {
 		fmt.Printf("Welcome, user %s!\n", username)
-		return true, userGroup
+		return true, username, userGroup
 	} else {
 		fmt.Printf("User %s does not exist. Please register first.\n", username)
-		return false, ""
+		return false, "", ""
 	}
 }
 
@@ -172,7 +175,7 @@ func checkUserExists(username string) (bool, string, error) {
 
 // Register new user
 func createNewUser() {
-	username := readInput("Enter a username of your choice: ")
+	username := readInput("Enter your username: ")
 	firstname := readInput("Enter your first name: ")
 	lastname := readInput("Enter your last name: ")
 	mobileno := readInput("Enter your mobile number: ")
@@ -211,8 +214,47 @@ func createNewUser() {
 
 }
 
-func changeToCarOwner() {
-	
+func changeToCarOwner(username string) {
+
+	licenseNo := readInput("Enter License Number: ")
+	plateNo := readInput("Enter Plate Number: ")
+
+	IntlicenseNo, _ := strconv.Atoi(licenseNo)
+
+	updatedUser := map[string]interface{}{
+		"User Group":     "Car Owner",
+		"License Number": IntlicenseNo,
+		"Plate Number":   plateNo,
+	}
+
+	putData, err := json.Marshal(updatedUser)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+
+	request, err := http.NewRequest(http.MethodPut, userURL+"/"+username+"/changecarowner", bytes.NewBuffer(putData))
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+	request.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode == http.StatusAccepted {
+		fmt.Println("User's User Group changed to Car Owner.")
+	} else if response.StatusCode == http.StatusNotFound {
+		fmt.Printf("Error - User %s does not exist\n", username)
+	} else {
+		fmt.Println("Error:", response.Status)
+	}
 }
 
 // --------------------------- Car Pooling Trip ---------------------------

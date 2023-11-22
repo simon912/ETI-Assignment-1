@@ -63,14 +63,16 @@ func printPassengerMenu(username string) {
 	fmt.Println("0. Logout")
 	passengerOption := readInput("Enter an option: ")
 	switch passengerOption {
-	case "1":
+	case "1": // Change to Car Owner
 		changeToCarOwner(username)
 		return
-	case "2":
+	case "2": // Update Profile
 		fmt.Println("Option 2 selected")
-	case "3":
+	case "3": // Browse Car Pooling Trip
 		listAllTrip()
 		printPassengerMenu(username)
+	case "4": // Delete Profile if user is over a year old
+		fmt.Println("Option 4 selected")
 	case "0":
 		fmt.Println("Logging out...")
 		return

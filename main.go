@@ -1,60 +1,48 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 	"time"
 
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
+	"github.com/rs/cors"
 )
 
-type userAttribute struct {
+type Users struct {
+	Username     string `json:"Username"`
 	Usergroup    string `json:"User Group"`
 	Firstname    string `json:"First Name"`
 	Lastname     string `json:"Last Name"`
 	MobileNumber int    `json:"Mobile Number"`
 	EmailAddr    string `json:"Email Address"`
 	//This attribute will only be used if the User's User Group is Car Owner
-	LicenseNo *int    `json:"License Number,omitempty"`
-	PlateNo   *string `json:"Car Plate,omitempty"`
+	LicenseNo    sql.NullInt64  `json:"License Number,omitempty"`
+	PlateNo      sql.NullString `json:"Car Plate,omitempty"`
+	CreationDate string         `json:"Account Creation Date"`
 }
 
-var user = map[string]userAttribute{
-	"john123": {"Passenger", "John", "Doe", 98765432, "john123@gmail.com", nil, nil},
-	"jane456": {"Car Owner", "Jane", "Doe", 98534243, "janedoe@gmail.com", intPtr(103436331), strPtr("SKW22G")},
-	"lee44":   {"Passenger", "Bryan", "Lee", 95732952, "bryan@gmail.com", nil, nil},
-	"tjm95":   {"Car Owner", "Jun Ming", "Tan", 98643435, "tjm@gmail.com", intPtr(104953432), strPtr("SLT45G")},
-}
-
-type carPoolingTripAttr struct {
-	PickUpLocation      string    `json:"Pick-Up Location"`
-	AltPickUpLocation   *string   `json:"Alternate Pick-Up Location"` // can be nullable
-	StartTravelTime     time.Time `json:"Start Traveling Time"`
-	DestinationLocation string    `json:"Destination Location"`
-	NoPassengers        int       `json:"Number of Passengers Allowed"`
-	Author              string    `json:"Published By"`
-}
-
-var carPoolingTrip = map[int]carPoolingTripAttr{
-	1: {"Ang Mo Kio Road", nil, time.Date(2023, time.November, 13, 10, 30, 0, 0, time.UTC), "Geylang Road", 3, "jane456"},
-	2: {"Bukit Panjang Ring Road", strPtr("Bangkit Road"), time.Date(2023, time.November, 11, 15, 00, 0, 0, time.UTC), "Choa Chu Kang Road", 3, "tjm456"},
-}
-
-// helper functions to create pointers for int and string values
-func intPtr(i int) *int {
-	return &i
-}
-
-func strPtr(s string) *string {
-	return &s
+type Trips struct {
+	PickUpLocation      string         `json:"Pick-Up Location"`
+	AltPickUpLocation   sql.NullString `json:"Alternate Pick-Up Location"` // can be nullable
+	StartTravelTime     time.Time      `json:"Start Traveling Time"`
+	DestinationLocation string         `json:"Destination Location"`
+	NoPassengers        int            `json:"Number of Passengers Allowed"`
+	Author              string         `json:"Published By"`
 }
 
 // Register REST endpoint
 func main() {
 	router := mux.NewRouter()
+	corsOptions := cors.New(cors.Options{
+		AllowedOrigins: []string{"http://localhost:5001"},
+		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE"},
+	})
+	handler := corsOptions.Handler(router)
 	// Endpoint for User
 	//This GET method retrieves the relevant course information.
 	router.HandleFunc("/api/v1/user/{username}", GetUser).Methods("GET")
@@ -62,84 +50,126 @@ func main() {
 	router.HandleFunc("/api/v1/user", GetAllUser).Methods("GET")
 	//curl http://localhost:5000/api/v1/user/naruto55 -X POST -d "{\"User Group\":\"Car Owner\", \"First Name\":\"Naruto\", \"Last Name\":\"Uzumaki\", \"Mobile Number\":99987634, \"Email Address\":\"naruto@gmail.com\"}"
 	router.HandleFunc("/api/v1/user/{username}", CreateUser).Methods("POST")
-	router.HandleFunc("/api/v1/user/{username}", UpdateUser).Methods("PUT")
+	//router.HandleFunc("/api/v1/user/{username}", UpdateUser).Methods("PUT")
 	// test case: curl http://localhost:5000/api/v1/user/john123/changecarowner -X POST -d "{\"License Number\": 111123335, \"Car Plate\": \"ABC123\"}"
-	router.HandleFunc("/api/v1/user/{username}/changecarowner", ChangeToCarOwner).Methods("PUT")
+	//router.HandleFunc("/api/v1/user/{username}/changecarowner", ChangeToCarOwner).Methods("PUT")
+	// handlefunc here which deletes account after its 1 year old/365 days old
 
 	// Endpoint for Car-Pooling Trips
-	router.HandleFunc("/api/v1/carpoolingtrip", GetAllTrip).Methods("GET")
-	router.HandleFunc("/api/v1/carpoolingtrip/{tripid}", PublishTrip).Methods("POST")
+	//router.HandleFunc("/api/v1/carpoolingtrip", GetAllTrip).Methods("GET")
+	//router.HandleFunc("/api/v1/carpoolingtrip/{tripid}", PublishTrip).Methods("POST")
 	fmt.Println("Listening at port 5000")
-	log.Fatal(http.ListenAndServe(":5000", router))
+	log.Fatal(http.ListenAndServe(":5000", handler))
 }
 
 // ----------------------------- Endpoint for User ----------------------------------------
+
 func GetUser(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	username := params["username"]
-	currentUser, found := user[username]
-	if r.Method == http.MethodGet {
-		if !found {
-			http.Error(w, "Username does not exist", http.StatusNotFound)
-			return
-		}
-		if currentUser.Usergroup == "Passenger" {
-			fmt.Fprintf(w, "Username: %s\nUser Group: %s\nFirst Name: %s\nLast Name: %s\nMobile Number: %d\nEmail Address: %s\n\n", username, currentUser.Usergroup, currentUser.Firstname, currentUser.Lastname, currentUser.MobileNumber, currentUser.EmailAddr)
-		} else if currentUser.Usergroup == "Car Owner" {
-			fmt.Fprintf(w, "Username: %s\nUser Group: %s\nFirst Name: %s\nLast Name: %s\nMobile Number: %d\nEmail Address: %s\n", username, currentUser.Usergroup, currentUser.Firstname, currentUser.Lastname, currentUser.MobileNumber, currentUser.EmailAddr)
+	db, err := sql.Open("mysql", "user:password@tcp(127.0.0.1:3306)/carpoolingtrip")
 
-			// Check if LicenseNo and PlateNo are not nil before dereferencing
-			if currentUser.LicenseNo != nil {
-				fmt.Fprintf(w, "License Number: %d\n", *currentUser.LicenseNo)
-			}
-			if currentUser.PlateNo != nil {
-				fmt.Fprintf(w, "Plate Number: %s\n", *currentUser.PlateNo)
-			}
+	if err != nil {
+		panic(err.Error())
+	}
+	defer db.Close()
 
-			fmt.Fprintf(w, "\n")
+	query := "SELECT * FROM Users WHERE Username = ?"
+	result, err := db.Query(query, username)
+	if err != nil {
+		panic(err.Error())
+	}
+	defer result.Close()
+
+	found := false
+	for result.Next() {
+		var u Users
+		err = result.Scan(&u.Username, &u.Usergroup, &u.Firstname, &u.Lastname, &u.MobileNumber, &u.EmailAddr, &u.LicenseNo, &u.PlateNo, &u.CreationDate)
+		if err != nil {
+			panic(err.Error())
 		}
+		if u.Usergroup == "Passenger" {
+			fmt.Println(u.Username, u.Usergroup, u.Firstname, u.Lastname, u.MobileNumber, u.EmailAddr, u.CreationDate)
+		} else {
+			fmt.Println(u.Username, u.Usergroup, u.Firstname, u.Lastname, u.MobileNumber, u.EmailAddr, u.LicenseNo, u.PlateNo, u.CreationDate)
+		}
+
+		found = true
+	}
+	if !found {
+		fmt.Println("User doesn't exist")
+		http.Error(w, "User not found", http.StatusNotFound)
 	}
 }
 
 func GetAllUser(w http.ResponseWriter, r *http.Request) {
-
+	db, err := sql.Open("mysql", "user:password@tcp(127.0.0.1:3306)/carpoolingtrip")
 	//test case for retrieve all: curl -X GET http://localhost:5000/api/v1/user
-	for username, user := range user {
-		if user.Usergroup == "Passenger" {
-			fmt.Fprintf(w, "Username: %s\nUser Group: %s\nFirst Name: %s\nLast Name: %s\nMobile Number: %d\nEmail Address: %s\n\n", username, user.Usergroup, user.Firstname, user.Lastname, user.MobileNumber, user.EmailAddr)
-		} else if user.Usergroup == "Car Owner" {
-			fmt.Fprintf(w, "Username: %s\nUser Group: %s\nFirst Name: %s\nLast Name: %s\nMobile Number: %d\nEmail Address: %s\n", username, user.Usergroup, user.Firstname, user.Lastname, user.MobileNumber, user.EmailAddr)
-			if user.LicenseNo != nil {
-				fmt.Fprintf(w, "License Number: %d\n", *user.LicenseNo)
-			}
-			if user.PlateNo != nil {
-				fmt.Fprintf(w, "Plate Number: %s\n", *user.PlateNo)
-			}
-			fmt.Fprintf(w, "\n")
-		}
+	if err != nil {
+		panic(err.Error())
 	}
+	// database operation
+	defer db.Close()
+	results, err := db.Query("SELECT * FROM Users")
+	if err != nil {
+		panic(err.Error())
+	}
+	var usersList []Users
+	for results.Next() {
+		var u Users
+		err = results.Scan(&u.Username, &u.Usergroup, &u.Firstname, &u.Lastname, &u.MobileNumber, &u.EmailAddr, &u.LicenseNo, &u.PlateNo, &u.CreationDate)
+		if err != nil {
+			panic(err.Error())
+		}
+		fmt.Println(u.Username, u.Usergroup, u.Firstname, u.Lastname, u.MobileNumber, u.EmailAddr, u.LicenseNo, u.PlateNo, u.CreationDate)
+		usersList = append(usersList, u)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(usersList)
+}
+func userExists(username string) bool {
+	db, err := sql.Open("mysql", "user:password@tcp(127.0.0.1:3306)/carpoolingtrip")
+	if err != nil {
+		panic(err.Error())
+	}
+	defer db.Close()
+
+	query := "SELECT COUNT(*) FROM Users WHERE Username = ?"
+	var count int
+	err = db.QueryRow(query, username).Scan(&count)
+	if err != nil {
+		panic(err.Error())
+	}
+	return count > 0
 }
 
 func CreateUser(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	username := params["username"]
 
-	_, found := user[username]
-	if found {
-		http.Error(w, "Username already exists!", http.StatusConflict)
+	if userExists(username) {
+		http.Error(w, "Username already in use", http.StatusConflict)
 		return
 	}
 
-	var newUser userAttribute
+	var newUser Users
 	err := json.NewDecoder(r.Body).Decode(&newUser)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		panic(err.Error())
 	}
+	db, err := sql.Open("mysql", "user:password@tcp(127.0.0.1:3306)/carpoolingtrip")
+	if err != nil {
+		panic(err.Error())
+	}
+	defer db.Close()
 
-	user[username] = newUser
-
-	// status code 201 - Created
+	newUser.Username = username
+	query := "INSERT INTO Users (Username, UserGroup, FirstName, LastName, MobileNumber, EmailAddress, CreationDateTime) VALUES (?, ?, ?, ?, ?, ?, NOW())"
+	_, err = db.Exec(query, newUser.Username, "Passenger", newUser.Firstname, newUser.Lastname, newUser.MobileNumber, newUser.EmailAddr)
+	if err != nil {
+		panic(err.Error())
+	}
+	w.WriteHeader(http.StatusCreated)
 	w.WriteHeader(http.StatusAccepted)
 	fmt.Fprintf(w, "User %s has been registered!\n", username)
 }
@@ -147,26 +177,28 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	username := params["username"]
-
-	// Check if the username exists
-	_, found := user[username]
-	if !found {
-		http.Error(w, "Username does not exist", http.StatusNotFound)
-		return
-	}
-	// Decode the incoming JSON data to update the course
-	var updatedUser userAttribute
-	err := json.NewDecoder(r.Body).Decode(&updatedUser)
+	var updateUser Users
+	err := json.NewDecoder(r.Body).Decode(&updateUser)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		panic(err.Error())
+	}
+	db, err := sql.Open("mysql", "user:password@tcp(127.0.0.1:3306)/carpoolingtrip")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	user[username] = updatedUser
-	// Status Code 202 - Accepted
+	defer db.Close()
+	query := "UPDATE Users SET FirstName=?, LastName=?, MobileNumber=?, EmailAddress=? WHERE Username=?"
+	_, err = db.Exec(query, updateUser.Firstname, updateUser.Lastname, updateUser.MobileNumber, updateUser.EmailAddr, username)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	w.WriteHeader(http.StatusAccepted)
 	fmt.Fprintf(w, "User info has been updated\n")
 }
 
+/*
 func ChangeToCarOwner(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	username := params["username"]
@@ -247,3 +279,4 @@ func PublishTrip(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusAccepted)
 	fmt.Fprintf(w, "Your car publishing trip ID %s has been registered!\n", tripid)
 }
+*/

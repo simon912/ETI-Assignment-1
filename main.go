@@ -15,6 +15,7 @@ import (
 
 type Users struct {
 	Username     string `json:"Username"`
+	Password     string `json:"Password"`
 	Usergroup    string `json:"User Group"`
 	Firstname    string `json:"First Name"`
 	Lastname     string `json:"Last Name"`
@@ -45,11 +46,10 @@ func main() {
 	handler := corsOptions.Handler(router)
 	// Endpoint for User
 	//This GET method retrieves the relevant course information.
-	router.HandleFunc("/api/v1/user/{username}", GetUser).Methods("GET")
-	//This POST method creates or updates a user
+	router.HandleFunc("/api/v1/login/{username}", GetUser).Methods("GET")
 	router.HandleFunc("/api/v1/user", GetAllUser).Methods("GET")
 	//curl http://localhost:5000/api/v1/user/naruto55 -X POST -d "{\"User Group\":\"Car Owner\", \"First Name\":\"Naruto\", \"Last Name\":\"Uzumaki\", \"Mobile Number\":99987634, \"Email Address\":\"naruto@gmail.com\"}"
-	router.HandleFunc("/api/v1/user/{username}", CreateUser).Methods("POST")
+	router.HandleFunc("/api/v1/register/{username}", CreateUser).Methods("POST")
 	//router.HandleFunc("/api/v1/user/{username}", UpdateUser).Methods("PUT")
 	// test case: curl http://localhost:5000/api/v1/user/john123/changecarowner -X POST -d "{\"License Number\": 111123335, \"Car Plate\": \"ABC123\"}"
 	//router.HandleFunc("/api/v1/user/{username}/changecarowner", ChangeToCarOwner).Methods("PUT")
@@ -77,22 +77,30 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 	query := "SELECT * FROM Users WHERE Username = ?"
 	result, err := db.Query(query, username)
 	if err != nil {
-		panic(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 	defer result.Close()
 
 	found := false
 	for result.Next() {
 		var u Users
-		err = result.Scan(&u.Username, &u.Usergroup, &u.Firstname, &u.Lastname, &u.MobileNumber, &u.EmailAddr, &u.LicenseNo, &u.PlateNo, &u.CreationDate)
+		err = result.Scan(&u.Username, &u.Password, &u.Usergroup, &u.Firstname, &u.Lastname, &u.MobileNumber, &u.EmailAddr, &u.LicenseNo, &u.PlateNo, &u.CreationDate)
 		if err != nil {
-			panic(err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
-		if u.Usergroup == "Passenger" {
-			fmt.Println(u.Username, u.Usergroup, u.Firstname, u.Lastname, u.MobileNumber, u.EmailAddr, u.CreationDate)
-		} else {
-			fmt.Println(u.Username, u.Usergroup, u.Firstname, u.Lastname, u.MobileNumber, u.EmailAddr, u.LicenseNo, u.PlateNo, u.CreationDate)
+		response := struct {
+			Username string `json:"Username"`
+			Password string `json:"Password"`
+		}{
+			Username: u.Username,
+			Password: u.Password,
 		}
+
+		// Convert the response to JSON and send it
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
 
 		found = true
 	}

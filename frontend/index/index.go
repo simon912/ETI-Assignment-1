@@ -65,7 +65,7 @@ const htmlTemplate = `
 			const username = document.getElementById('loginUsername').value;
     		const password = document.getElementById('loginPassword').value;
 
-    		// Send a GET request to your /api/v1/login/{username} endpoint for authentication
+    		// Send a GET request to /api/v1/login/{username} endpoint for authentication
     		fetch('http://localhost:5000/api/v1/login/' + username, {
         		method: 'GET',
         		headers: {
@@ -99,11 +99,8 @@ const htmlTemplate = `
 			const lastname = document.getElementById('registerLastname').value;
 			const mobileNumber = document.getElementById('registerMobilenumber').value;
 			const email = document.getElementById('registerEmail').value;
-	
-			// You can perform any additional client-side validation here if needed
-	
-			// Send a POST request to your /api/v1/user/{username} endpoint with the registration data
-			fetch("'/api/v1/register/' + username", {
+			// Send a POST request to /api/v1/register/{username} endpoint for creation of account
+			fetch('http://localhost:5000/api/v1/register/' + username, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -111,10 +108,10 @@ const htmlTemplate = `
 				body: JSON.stringify({
 					Username: username,
 					Password: password,
-					Firstname: firstname,
-					Lastname: lastname,
-					MobileNumber: parseInt(mobileNumber), // assuming MobileNumber is an integer
-					EmailAddr: email,
+					"First Name": firstname,
+					"Last Name": lastname,
+					"Mobile Number": parseInt(mobileNumber), // assuming MobileNumber is an integer
+					"Email Address": email,
 				}),
 			})
 				.then(response => {
@@ -133,8 +130,6 @@ const htmlTemplate = `
 					showMessage('Registration failed. Username may already be in use.');
 				});
 		}
-	</script>
-	
 	</script>
 </head>
 <body>

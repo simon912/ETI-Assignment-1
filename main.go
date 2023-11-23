@@ -47,7 +47,6 @@ func main() {
 	// Endpoint for User
 	//This GET method retrieves the relevant course information.
 	router.HandleFunc("/api/v1/login/{username}", GetUser).Methods("GET")
-	router.HandleFunc("/api/v1/user", GetAllUser).Methods("GET")
 	//curl http://localhost:5000/api/v1/user/naruto55 -X POST -d "{\"User Group\":\"Car Owner\", \"First Name\":\"Naruto\", \"Last Name\":\"Uzumaki\", \"Mobile Number\":99987634, \"Email Address\":\"naruto@gmail.com\"}"
 	router.HandleFunc("/api/v1/register/{username}", CreateUser).Methods("POST")
 	//router.HandleFunc("/api/v1/user/{username}", UpdateUser).Methods("PUT")
@@ -110,31 +109,6 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func GetAllUser(w http.ResponseWriter, r *http.Request) {
-	db, err := sql.Open("mysql", "user:password@tcp(127.0.0.1:3306)/carpoolingtrip")
-	//test case for retrieve all: curl -X GET http://localhost:5000/api/v1/user
-	if err != nil {
-		panic(err.Error())
-	}
-	// database operation
-	defer db.Close()
-	results, err := db.Query("SELECT * FROM Users")
-	if err != nil {
-		panic(err.Error())
-	}
-	var usersList []Users
-	for results.Next() {
-		var u Users
-		err = results.Scan(&u.Username, &u.Usergroup, &u.Firstname, &u.Lastname, &u.MobileNumber, &u.EmailAddr, &u.LicenseNo, &u.PlateNo, &u.CreationDate)
-		if err != nil {
-			panic(err.Error())
-		}
-		fmt.Println(u.Username, u.Usergroup, u.Firstname, u.Lastname, u.MobileNumber, u.EmailAddr, u.LicenseNo, u.PlateNo, u.CreationDate)
-		usersList = append(usersList, u)
-	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(usersList)
-}
 func userExists(username string) bool {
 	db, err := sql.Open("mysql", "user:password@tcp(127.0.0.1:3306)/carpoolingtrip")
 	if err != nil {
@@ -163,17 +137,19 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	var newUser Users
 	err := json.NewDecoder(r.Body).Decode(&newUser)
 	if err != nil {
-		panic(err.Error())
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
 	}
 	db, err := sql.Open("mysql", "user:password@tcp(127.0.0.1:3306)/carpoolingtrip")
 	if err != nil {
-		panic(err.Error())
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
 	}
 	defer db.Close()
 
 	newUser.Username = username
-	query := "INSERT INTO Users (Username, UserGroup, FirstName, LastName, MobileNumber, EmailAddress, CreationDateTime) VALUES (?, ?, ?, ?, ?, ?, NOW())"
-	_, err = db.Exec(query, newUser.Username, "Passenger", newUser.Firstname, newUser.Lastname, newUser.MobileNumber, newUser.EmailAddr)
+	query := "INSERT INTO Users (Username, Password, UserGroup, FirstName, LastName, MobileNumber, EmailAddress, CreationDateTime) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())"
+	_, err = db.Exec(query, newUser.Username, newUser.Password, "Passenger", newUser.Firstname, newUser.Lastname, newUser.MobileNumber, newUser.EmailAddr)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -196,14 +172,27 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer db.Close()
-	query := "UPDATE Users SET FirstName=?, LastName=?, MobileNumber=?, EmailAddress=? WHERE Username=?"
-	_, err = db.Exec(query, updateUser.Firstname, updateUser.Lastname, updateUser.MobileNumber, updateUser.EmailAddr, username)
+
+	tx, err := db.Begin()
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	defer tx.Rollback()
+
+	query := "UPDATE Users SET Password=?, FirstName=?, LastName=?, MobileNumber=?, EmailAddress=? WHERE Username=?"
+	_, err = db.Exec(query, updateUser.Password, updateUser.Firstname, updateUser.Lastname, updateUser.MobileNumber, updateUser.EmailAddr, username)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	err = tx.Commit()
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
 	w.WriteHeader(http.StatusAccepted)
-	fmt.Fprintf(w, "User info has been updated\n")
+	fmt.Fprintf(w, "User %s has been registered!\n", username)
 }
 
 /*

@@ -1,11 +1,19 @@
 package main
 
 import (
+	"database/sql"
+	"eti-assignment-1/frontend/home"
 	"fmt"
 	"html/template"
 	"net/http"
+	"sync"
 
 	_ "github.com/go-sql-driver/mysql"
+)
+
+var (
+	db      *sql.DB
+	usersMu sync.RWMutex
 )
 
 const htmlTemplate = `
@@ -82,8 +90,7 @@ const htmlTemplate = `
         	.then(data => {
             	// Check if the password from the response matches the entered password
             	if (data && data.Password === password) {
-                	// Display a success message or redirect to another page if needed
-                	showMessage('Login successful');
+                	window.location.href = '/home?username=' + encodeURIComponent(username);
             	}
         	})
         	.catch(error => {
@@ -170,8 +177,26 @@ const htmlTemplate = `
 </html>
 `
 
+func init() {
+	var err error
+	// Connect to the MySQL database
+	db, err = sql.Open("mysql", "user:password@tcp(127.0.0.1:3306)/carpoolingtrip")
+	if err != nil {
+		panic(err)
+	}
+
+	// Check if the connection to the database is successful
+	err = db.Ping()
+	if err != nil {
+		panic(err)
+	}
+}
 func main() {
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+
+	mux := http.NewServeMux()
+
+	// Handle login route
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		tmpl, err := template.New("login").Parse(htmlTemplate)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -185,6 +210,22 @@ func main() {
 		}
 	})
 
+	// Handle home route using the home package handler
+	mux.HandleFunc("/home", home.HomeHandler)
+
+	mux.HandleFunc("/login-success", func(w http.ResponseWriter, r *http.Request) {
+		// Extract username from the URL
+		username := r.URL.Query().Get("username")
+		loginSuccess(w, r, username)
+	})
+
+	http.Handle("/", mux)
+
 	fmt.Println("Listening at http://localhost:5001")
 	http.ListenAndServe(":5001", nil)
+
+}
+
+func loginSuccess(w http.ResponseWriter, r *http.Request, username string) {
+	http.Redirect(w, r, "http://localhost:5001/home?username="+username, http.StatusSeeOther)
 }

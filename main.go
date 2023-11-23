@@ -44,6 +44,7 @@ func main() {
 		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE"},
 	})
 	handler := corsOptions.Handler(router)
+
 	// Endpoint for User
 	//This GET method retrieves the relevant course information.
 	router.HandleFunc("/api/v1/login/{username}", GetUser).Methods("GET")

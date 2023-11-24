@@ -1,3 +1,4 @@
+// index.go - for login and register of user
 package main
 
 import (
@@ -151,7 +152,7 @@ const htmlTemplate = `
             <label for="loginUsername">Username:</label>
             <input type="text" id="loginUsername" required><br>
             <label for="loginPassword">Password:</label>
-            <input type="text" id="loginPassword" required><br>
+            <input type="password" id="loginPassword" required><br>
 			<button type="button" onclick="loginUser()">Login</button>
         </form>
     </div>
@@ -177,20 +178,6 @@ const htmlTemplate = `
 </html>
 `
 
-func init() {
-	var err error
-	// Connect to the MySQL database
-	db, err = sql.Open("mysql", "user:password@tcp(127.0.0.1:3306)/carpoolingtrip")
-	if err != nil {
-		panic(err)
-	}
-
-	// Check if the connection to the database is successful
-	err = db.Ping()
-	if err != nil {
-		panic(err)
-	}
-}
 func main() {
 
 	mux := http.NewServeMux()

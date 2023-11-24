@@ -1,3 +1,4 @@
+// main.go - the backend
 package main
 
 import (
@@ -50,6 +51,7 @@ func main() {
 	router.HandleFunc("/api/v1/login/{username}", GetUser).Methods("GET")
 	//curl http://localhost:5000/api/v1/user/naruto55 -X POST -d "{\"User Group\":\"Car Owner\", \"First Name\":\"Naruto\", \"Last Name\":\"Uzumaki\", \"Mobile Number\":99987634, \"Email Address\":\"naruto@gmail.com\"}"
 	router.HandleFunc("/api/v1/register/{username}", CreateUser).Methods("POST")
+	router.HandleFunc("/api/v1/user/{username}", GetUser).Methods("GET")
 	//router.HandleFunc("/api/v1/user/{username}", UpdateUser).Methods("PUT")
 	// test case: curl http://localhost:5000/api/v1/user/john123/changecarowner -X POST -d "{\"License Number\": 111123335, \"Car Plate\": \"ABC123\"}"
 	//router.HandleFunc("/api/v1/user/{username}/changecarowner", ChangeToCarOwner).Methods("PUT")

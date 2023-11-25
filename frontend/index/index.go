@@ -199,7 +199,6 @@ func main() {
 
 	// Handle home route using the home package handler
 	mux.HandleFunc("/home", home.HomeHandler)
-
 	mux.HandleFunc("/login-success", func(w http.ResponseWriter, r *http.Request) {
 		// Extract username from the URL
 		username := r.URL.Query().Get("username")

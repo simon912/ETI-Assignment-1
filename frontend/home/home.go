@@ -2,6 +2,7 @@
 package home
 
 import (
+	"eti-assignment-1/frontend/profile"
 	"net/http"
 	"text/template"
 )
@@ -36,27 +37,23 @@ const homeTemplate = `
                 messageContainer.style.display = 'none';
             }, 3000);
         }
-		function showUserInfo() {
-			const updateUserContainer = document.getElementById('updateUserContainer');
-			const changeCarOwnerContainer = document.getElementById('changeCarOwnerContainer');
-			updateUserContainer.style.display = 'block';
-			changeCarOwnerContainer.style.display = 'none';
-
-			document.getElementById('updateUsername').value = '';
-			document.getElementById('updatePassword').value = '';
-			document.getElementById('updateMobileNo').value = '';
-			document.getElementById('updateEmailAddr').value = '';
-            document.getElementById('updateUserForm').style.display = 'block';
-		}
-		function showChangeCarOwner() {
-			const updateUserContainer = document.getElementById('updateUserContainer');
-			const changeCarOwnerContainer = document.getElementById('changeCarOwnerContainer');
-			updateUserContainer.style.display = 'none';
-			changeCarOwnerContainer.style.display = 'block';
-
-			document.getElementById('licenseNo').value = '';
-			document.getElementById('carPlateNo').value = '';
-            document.getElementById('changeCarOwnerForm').style.display = 'block';
+		function redirectedToProfile() {
+			const urlParams = new URLSearchParams(window.location.search);
+        const username = urlParams.get('username');
+        
+        // Make a GET request to the server to handle the redirection
+        fetch('/redirect-profile?username=' + encodeURIComponent(username))
+            .then(response => {
+                if (response.ok) {
+                    // Redirect to the profile page
+                    window.location.href = '/profile?username=' + encodeURIComponent(username);
+                } else {
+                    console.error('Error handling redirection:', response.status, response.statusText);
+                }
+            })
+            .catch(error => {
+                console.error('Error handling redirection:', error);
+            });
 		}
 		function logOutUser() {
 
@@ -64,38 +61,18 @@ const homeTemplate = `
 	</script>
 </head>
 <body>
-	<button type="button" onclick="showChangeCarOwner()">Change to Car Owner</button>
-	<button type="button" onclick="showUserInfo()">Update Profile</button>
+	<button type="button" onclick="redirectedToProfile()">View Profile</button>
 	<button type="button" onclick="logOutUser()">Log Out</button>
-	<div id="changeCarOwnerContainer">
-		<form id="changeCarOwnerForm">
-			<label for="licenseNo">Your Driver's License Number:</label>
-			<input type="text" id="licenseNo" required><br>
-			<label for="carPlateNo">Your Car Plate Number:</label>
-			<input type="text" id="carPlateNo" required><br>
-			<button type="button" onclick="showUserInfo()">Change to Car Owner</button>
-		</form>
-	</div>
-	<div id="updateUserContainer">
-		<form id="updateUserForm">
-			<label for="updateUsername">Username:</label>
-			<input type="text" id="updateUsername" required><br>
-			<label for="updatePassword">Password:</label>
-			<input type="password" id="updatePassword" required><br>
-			<label for="updateMobileNo">Mobile Number:</label>
-			<input type="text" id="updateMobileNo" required><br>
-			<label for="updateEmailAddr">Email Address:</label>
-			<input type="text" id="updateEmailAddr" required><br>
-			<button type="button" onclick="showUserInfo()">Update</button>
-		</form>
 	</div>
     <div id="message"></div>
 </body>
 </html>
 `
 
-// HomeHandler handles requests to the home page
+// ProfileHandler handles requests to the profile page
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
+
+	// Extract username from the URL
 	username := r.URL.Query().Get("username")
 
 	// Pass the username to the template
@@ -104,6 +81,7 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	}{
 		Username: username,
 	}
+
 	tmpl, err := template.New("home").Parse(homeTemplate)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -115,4 +93,13 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	http.HandleFunc("/profile", profile.ProfileHandler)
+	http.HandleFunc("/display-profile", func(w http.ResponseWriter, r *http.Request) {
+		username := r.URL.Query().Get("username")
+		redirectToProfileSuccess(w, r, username)
+	})
+
+}
+func redirectToProfileSuccess(w http.ResponseWriter, r *http.Request, username string) {
+	http.Redirect(w, r, "http://localhost:5001/profile?username="+username, http.StatusSeeOther)
 }

@@ -15,7 +15,7 @@ const homeTemplate = `
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Car Pooling Trip - Home</title>
 	<h1>Welcome to the Car Pooling Trip Platform!</h1>
-	<h2>Welcome, User {{.Username}}</h2>
+	<h2>Welcome {{.Username}}</h2>
 	<style>
     #message {
         display: none;
@@ -28,6 +28,9 @@ const homeTemplate = `
 	}
 </style>
  <script>
+		window.onload = function () {
+			retrieveUserData();
+		}
         function showMessage(message) {
             const messageContainer = document.getElementById('message');
             messageContainer.innerHTML = message;
@@ -39,7 +42,7 @@ const homeTemplate = `
         }
 		function redirectedToProfile() {
 			const urlParams = new URLSearchParams(window.location.search);
-        const username = urlParams.get('username');
+        	const username = urlParams.get('username');
         
         // Make a GET request to the server to handle the redirection
         fetch('/redirect-profile?username=' + encodeURIComponent(username))
@@ -58,6 +61,44 @@ const homeTemplate = `
 		function logOutUser() {
 
 		}
+		function retrieveUserData() {
+			const urlParams = new URLSearchParams(window.location.search);
+			const username = urlParams.get('username');
+		
+			// Send a GET request to /api/v1/user/{username} endpoint for user data
+			fetch('http://localhost:5000/api/v1/user/' + username, {
+				method: 'GET',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+			})
+			.then(response => {
+				if (response.ok) {
+					return response.json();
+				} else {
+					throw new Error('Failed to retrieve user data');
+				}
+			})
+			.then(data => {
+				// Assuming the backend sends JSON data with user details
+				console.log('Response Data:', data);
+				// Extract usergroup, firstname, and lastname from the data
+				const usergroup = data['User Group'];
+				const firstname = data['First Name'];
+				const lastname = data['Last Name'];
+		
+				// Now you can use these variables as needed
+		
+				// For example, you can log them to the console (remove in production)
+				console.log('Usergroup:', usergroup);
+				console.log('Firstname:', firstname);
+				console.log('Lastname:', lastname);
+			})
+			.catch(error => {
+				// Display an error message or handle the error appropriately
+				showMessage('Failed to retrieve user data.');
+			});
+		}
 	</script>
 </head>
 <body>
@@ -75,7 +116,7 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	// Extract username from the URL
 	username := r.URL.Query().Get("username")
 
-	// Pass the username to the template
+	// Pass the username and additional user details to the template
 	data := struct {
 		Username string
 	}{

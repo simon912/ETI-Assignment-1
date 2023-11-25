@@ -48,8 +48,10 @@ func main() {
 
 	// Endpoint for User
 	//This GET method retrieves the relevant course information.
+	// For Login
 	router.HandleFunc("/api/v1/login/{username}", GetUser).Methods("GET")
-	//curl http://localhost:5000/api/v1/user/naruto55 -X POST -d "{\"User Group\":\"Car Owner\", \"First Name\":\"Naruto\", \"Last Name\":\"Uzumaki\", \"Mobile Number\":99987634, \"Email Address\":\"naruto@gmail.com\"}"
+	//test case: curl http://localhost:5000/api/v1/user/naruto55 -X POST -d "{\"User Group\":\"Car Owner\", \"First Name\":\"Naruto\", \"Last Name\":\"Uzumaki\", \"Mobile Number\":99987634, \"Email Address\":\"naruto@gmail.com\"}"
+	// For Register
 	router.HandleFunc("/api/v1/register/{username}", CreateUser).Methods("POST")
 	router.HandleFunc("/api/v1/user/{username}", GetUser).Methods("GET")
 	//router.HandleFunc("/api/v1/user/{username}", UpdateUser).Methods("PUT")
@@ -93,11 +95,17 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		response := struct {
-			Username string `json:"Username"`
-			Password string `json:"Password"`
+			Username  string `json:"Username"`
+			Password  string `json:"Password"`
+			Usergroup string `json:"User Group"`
+			Firstname string `json:"First Name"`
+			Lastname  string `json:"Last Name"`
 		}{
-			Username: u.Username,
-			Password: u.Password,
+			Username:  u.Username,
+			Password:  u.Password,
+			Usergroup: u.Usergroup,
+			Firstname: u.Firstname,
+			Lastname:  u.Lastname,
 		}
 
 		// Convert the response to JSON and send it

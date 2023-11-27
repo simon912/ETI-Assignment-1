@@ -95,17 +95,21 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		response := struct {
-			Username  string `json:"Username"`
-			Password  string `json:"Password"`
-			Usergroup string `json:"User Group"`
-			Firstname string `json:"First Name"`
-			Lastname  string `json:"Last Name"`
+			Username     string `json:"Username"`
+			Password     string `json:"Password"`
+			Usergroup    string `json:"User Group"`
+			Firstname    string `json:"First Name"`
+			Lastname     string `json:"Last Name"`
+			MobileNumber int    `json:"Mobile Number"`
+			EmailAddr    string `json:"Email Address"`
 		}{
-			Username:  u.Username,
-			Password:  u.Password,
-			Usergroup: u.Usergroup,
-			Firstname: u.Firstname,
-			Lastname:  u.Lastname,
+			Username:     u.Username,
+			Password:     u.Password,
+			Usergroup:    u.Usergroup,
+			Firstname:    u.Firstname,
+			Lastname:     u.Lastname,
+			MobileNumber: u.MobileNumber,
+			EmailAddr:    u.EmailAddr,
 		}
 
 		// Convert the response to JSON and send it

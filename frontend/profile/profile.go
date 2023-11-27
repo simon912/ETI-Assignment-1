@@ -26,6 +26,8 @@ const profileTemplate = `
 	}
 </style>
  <script>
+ 		const urlParams = new URLSearchParams(window.location.search);
+		const username = urlParams.get('username');
         function showMessage(message) {
             const messageContainer = document.getElementById('message');
             messageContainer.innerHTML = message;
@@ -36,15 +38,46 @@ const profileTemplate = `
             }, 3000);
         }
 		function showUserInfo() {
+			// Send a GET request to /api/v1/user/{username} endpoint for user data
+			fetch('http://localhost:5000/api/v1/user/' + username, {
+				method: 'GET',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+			})
+			.then(response => {
+				if (response.ok) {
+					return response.json();
+				} else {
+					throw new Error('Failed to retrieve user data');
+				}
+			})
+			.then(data => {
+				// Assuming the backend sends JSON data with user details
+				console.log('Response Data:', data);
+				// Extract usergroup, firstname, and lastname from the data
+				const usergroup = data['User Group'];
+				const firstname = data['First Name'];
+				const lastname = data['Last Name'];
+				const mobileno = data['Mobile Number'];
+				const emailaddr = data['Email Address'];
+		
+				// Now you can use these variables as needed
+		
+				// For example, you can log them to the console (remove in production)
+				document.getElementById('updateUsername').value = username;
+				document.getElementById('updatePassword').value = '';
+				document.getElementById('updateMobileNo').value = mobileno;
+				document.getElementById('updateEmailAddr').value = emailaddr;
+			})
+			.catch(error => {
+				// Display an error message or handle the error appropriately
+				showMessage('Failed to retrieve user data.');
+			});
 			const updateUserContainer = document.getElementById('updateUserContainer');
 			const changeCarOwnerContainer = document.getElementById('changeCarOwnerContainer');
 			updateUserContainer.style.display = 'block';
 			changeCarOwnerContainer.style.display = 'none';
-
-			document.getElementById('updateUsername').value = '';
-			document.getElementById('updatePassword').value = '';
-			document.getElementById('updateMobileNo').value = '';
-			document.getElementById('updateEmailAddr').value = '';
             document.getElementById('updateUserForm').style.display = 'block';
 		}
 		function showChangeCarOwner() {

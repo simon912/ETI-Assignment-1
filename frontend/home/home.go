@@ -15,7 +15,7 @@ const homeTemplate = `
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Car Pooling Trip - Home</title>
 	<h1>Welcome to the Car Pooling Trip Platform!</h1>
-	<h2>Welcome {{.Username}}</h2>
+	<h2>Welcome <span id="usergroupspan"></span> <span id="firstnamespan"></span> <span id="lastnamespan"></span></h2>
 	<style>
     #message {
         display: none;
@@ -86,13 +86,17 @@ const homeTemplate = `
 				const usergroup = data['User Group'];
 				const firstname = data['First Name'];
 				const lastname = data['Last Name'];
+				
 		
 				// Now you can use these variables as needed
 		
 				// For example, you can log them to the console (remove in production)
-				console.log('Usergroup:', usergroup);
-				console.log('Firstname:', firstname);
-				console.log('Lastname:', lastname);
+				const userGroupSpan = document.getElementById('usergroupspan');
+            	userGroupSpan.innerHTML = usergroup;
+				const firstNameSpan = document.getElementById('firstnamespan');
+            	firstNameSpan.innerHTML = firstname;
+				const lastNameSpan = document.getElementById('lastnamespan');
+            	lastNameSpan.innerHTML = lastname;
 			})
 			.catch(error => {
 				// Display an error message or handle the error appropriately
@@ -102,7 +106,9 @@ const homeTemplate = `
 	</script>
 </head>
 <body>
+	<div id="userButtonList">
 	<button type="button" onclick="redirectedToProfile()">View Profile</button>
+	<button type="button" onclick="redirectedToProfile()">View Trips</button>
 	<button type="button" onclick="logOutUser()">Log Out</button>
 	</div>
     <div id="message"></div>

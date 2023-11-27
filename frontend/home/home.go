@@ -87,10 +87,6 @@ const homeTemplate = `
 				const firstname = data['First Name'];
 				const lastname = data['Last Name'];
 				
-		
-				// Now you can use these variables as needed
-		
-				// For example, you can log them to the console (remove in production)
 				const userGroupSpan = document.getElementById('usergroupspan');
             	userGroupSpan.innerHTML = usergroup;
 				const firstNameSpan = document.getElementById('firstnamespan');

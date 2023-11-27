@@ -54,9 +54,9 @@ func main() {
 	// For Register
 	router.HandleFunc("/api/v1/register/{username}", CreateUser).Methods("POST")
 	router.HandleFunc("/api/v1/user/{username}", GetUser).Methods("GET")
-	//router.HandleFunc("/api/v1/user/{username}", UpdateUser).Methods("PUT")
+	router.HandleFunc("/api/v1/updateuser/{username}", UpdateUser).Methods("PUT")
 	// test case: curl http://localhost:5000/api/v1/user/john123/changecarowner -X POST -d "{\"License Number\": 111123335, \"Car Plate\": \"ABC123\"}"
-	//router.HandleFunc("/api/v1/user/{username}/changecarowner", ChangeToCarOwner).Methods("PUT")
+	router.HandleFunc("/api/v1/user/{username}/changecarowner", ChangeToCarOwner).Methods("PUT")
 	// handlefunc here which deletes account after its 1 year old/365 days old
 
 	// Endpoint for Car-Pooling Trips
@@ -195,8 +195,8 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 	defer tx.Rollback()
 
-	query := "UPDATE Users SET Password=?, FirstName=?, LastName=?, MobileNumber=?, EmailAddress=? WHERE Username=?"
-	_, err = db.Exec(query, updateUser.Password, updateUser.Firstname, updateUser.Lastname, updateUser.MobileNumber, updateUser.EmailAddr, username)
+	query := "UPDATE Users SET MobileNumber=?, EmailAddress=? WHERE Username=?"
+	_, err = db.Exec(query, updateUser.MobileNumber, updateUser.EmailAddr, username)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -207,46 +207,79 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusAccepted)
-	fmt.Fprintf(w, "User %s has been registered!\n", username)
+	fmt.Fprintf(w, "User %s has been updated!\n", username)
 }
 
-/*
 func ChangeToCarOwner(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	username := params["username"]
-	currentUser := user[username]
-	if currentUser.Usergroup == "Car Owner" {
-		http.Error(w, "User is a Car Owner!", http.StatusBadRequest)
-		return
-	}
-	// Decode the incoming JSON data to update the user to a Car Owner
-	var carOwnerUpdate struct {
-		LicenseNo *int    `json:"License Number"`
-		PlateNo   *string `json:"Car Plate"`
-	}
-
-	err := json.NewDecoder(r.Body).Decode(&carOwnerUpdate)
+	var updateUser Users
+	err := json.NewDecoder(r.Body).Decode(&updateUser)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		panic(err.Error())
+	}
+	db, err := sql.Open("mysql", "user:password@tcp(127.0.0.1:3306)/carpoolingtrip")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	defer db.Close()
 
-	// Update the user to a Car Owner
-	newUser := userAttribute{
-		Usergroup:    "Car Owner",
-		Firstname:    currentUser.Firstname,
-		Lastname:     currentUser.Lastname,
-		MobileNumber: currentUser.MobileNumber,
-		EmailAddr:    currentUser.EmailAddr,
-		LicenseNo:    carOwnerUpdate.LicenseNo,
-		PlateNo:      carOwnerUpdate.PlateNo,
+	tx, err := db.Begin()
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
 	}
-	user[username] = newUser
-	// Status Code 202 - Accepted
+	defer tx.Rollback()
+
+	query := "UPDATE Users SET UserGroup=?, LicenseNo=?, PlateNo=? WHERE Username=?"
+	_, err = db.Exec(query, "Car Owner", updateUser.LicenseNo, updateUser.PlateNo, username)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	err = tx.Commit()
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
 	w.WriteHeader(http.StatusAccepted)
-	fmt.Fprintf(w, "User %s has been updated to a Car Owner\n", username)
+	fmt.Fprintf(w, "User %s has been changed to Car Owner!\n", username)
+	/*
+		currentUser := user[username]
+		if currentUser.Usergroup == "Car Owner" {
+			http.Error(w, "User is a Car Owner!", http.StatusBadRequest)
+			return
+		}
+		// Decode the incoming JSON data to update the user to a Car Owner
+		var carOwnerUpdate struct {
+			LicenseNo *int    `json:"License Number"`
+			PlateNo   *string `json:"Car Plate"`
+		}
+
+		err := json.NewDecoder(r.Body).Decode(&carOwnerUpdate)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		// Update the user to a Car Owner
+		newUser := userAttribute{
+			Usergroup:    "Car Owner",
+			Firstname:    currentUser.Firstname,
+			Lastname:     currentUser.Lastname,
+			MobileNumber: currentUser.MobileNumber,
+			EmailAddr:    currentUser.EmailAddr,
+			LicenseNo:    carOwnerUpdate.LicenseNo,
+			PlateNo:      carOwnerUpdate.PlateNo,
+		}
+		user[username] = newUser
+		// Status Code 202 - Accepted
+		w.WriteHeader(http.StatusAccepted)
+		fmt.Fprintf(w, "User %s has been updated to a Car Owner\n", username)*/
 }
 
+/*
 // ----------------------------- Endpoint for Car Pooling Trips ----------------------------------------
 func GetAllTrip(w http.ResponseWriter, r *http.Request) {
 	//test case for retrieve all: curl -X GET http://localhost:5000/api/v1/carpoolingtrip

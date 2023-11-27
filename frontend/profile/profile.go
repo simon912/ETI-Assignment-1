@@ -61,12 +61,7 @@ const profileTemplate = `
 				const lastname = data['Last Name'];
 				const mobileno = data['Mobile Number'];
 				const emailaddr = data['Email Address'];
-		
-				// Now you can use these variables as needed
-		
-				// For example, you can log them to the console (remove in production)
 				document.getElementById('updateUsername').value = username;
-				document.getElementById('updatePassword').value = '';
 				document.getElementById('updateMobileNo').value = mobileno;
 				document.getElementById('updateEmailAddr').value = emailaddr;
 			})
@@ -90,6 +85,33 @@ const profileTemplate = `
 			document.getElementById('carPlateNo').value = '';
             document.getElementById('changeCarOwnerForm').style.display = 'block';
 		}
+		function updateUserInfo(username) {
+            const mobilenumber = parseInt(document.getElementById('updateMobileNo').value);
+            const emailaddr = document.getElementById('updateEmailAddr').value;
+        
+            fetch('http://localhost:5000/api/v1/updateuser/' + username, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    "Mobile Number": mobilenumber,
+                    "Email Address": emailaddr,
+                }),
+            })
+            .then(response => {
+                if (response.ok) {
+                    document.getElementById('updateUserForm').style.display = 'none';
+                    document.getElementById('message').style.display = 'block';
+                    document.getElementById('message').textContent = "User " + username + "'s info updated successfully";
+                } else {
+                    throw new Error('User update failed');
+                }
+            })
+            .catch(error => {
+                console.error('Error updating user:', error.message);
+            });
+        }
 	</script>
 </head>
 <body>
@@ -108,14 +130,12 @@ const profileTemplate = `
 	<div id="updateUserContainer">
 		<form id="updateUserForm">
 			<label for="updateUsername">Username:</label>
-			<input type="text" id="updateUsername" required><br>
-			<label for="updatePassword">Password:</label>
-			<input type="password" id="updatePassword" required><br>
+			<input type="text" id="updateUsername" readonly><br>
 			<label for="updateMobileNo">Mobile Number:</label>
 			<input type="text" id="updateMobileNo" required><br>
 			<label for="updateEmailAddr">Email Address:</label>
 			<input type="text" id="updateEmailAddr" required><br>
-			<button type="button" onclick="showUserInfo()">Update</button>
+			<button type="button" onclick="updateUserInfo(username)">Update</button>
 		</form>
 	</div>
     <div id="message"></div>

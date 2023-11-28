@@ -81,8 +81,8 @@ const profileTemplate = `
 			updateUserContainer.style.display = 'none';
 			changeCarOwnerContainer.style.display = 'block';
 
-			document.getElementById('licenseNo').value = '';
-			document.getElementById('carPlateNo').value = '';
+			document.getElementById('carownerLicenseNo').value = '';
+			document.getElementById('carownerCarPlateNo').value = '';
             document.getElementById('changeCarOwnerForm').style.display = 'block';
 		}
 		function updateUserInfo(username) {
@@ -112,6 +112,32 @@ const profileTemplate = `
                 console.error('Error updating user:', error.message);
             });
         }
+		function changeCarOwner(username) {
+            const licenseno = parseInt(document.getElementById('carownerLicenseNo').value);
+            const plateno = document.getElementById('carownerCarPlateNo').value;
+            fetch('http://localhost:5000/api/v1/changecarowner/' + username, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    "License Number": licenseno,
+                    "Plate Number": plateno,
+                }),
+            })
+            .then(response => {
+                if (response.ok) {
+                    document.getElementById('changeCarOwnerForm').style.display = 'none';
+                    document.getElementById('message').style.display = 'block';
+                    document.getElementById('message').textContent = "User " + username + " changed to Car Owner";
+                } else {
+                    throw new Error('User update failed');
+                }
+            })
+            .catch(error => {
+                console.error('Error updating user:', error.message);
+            });
+        }
 	</script>
 </head>
 <body>
@@ -120,11 +146,11 @@ const profileTemplate = `
 	<button type="button" onclick="logOutUser()">Log Out</button>
 	<div id="changeCarOwnerContainer">
 		<form id="changeCarOwnerForm">
-			<label for="licenseNo">Your Driver's License Number:</label>
-			<input type="text" id="licenseNo" required><br>
-			<label for="carPlateNo">Your Car Plate Number:</label>
-			<input type="text" id="carPlateNo" required><br>
-			<button type="button" onclick="showUserInfo()">Change to Car Owner</button>
+			<label for="carownerLicenseNo">Your Driver's License Number:</label>
+			<input type="text" id="carownerLicenseNo" required><br>
+			<label for="carownerCarPlateNo">Your Car Plate Number:</label>
+			<input type="text" id="carownerCarPlateNo" required><br>
+			<button type="button" onclick="changeCarOwner(username)">Change to Car Owner</button>
 		</form>
 	</div>
 	<div id="updateUserContainer">

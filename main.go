@@ -24,7 +24,7 @@ type Users struct {
 	EmailAddr    string `json:"Email Address"`
 	//This attribute will only be used if the User's User Group is Car Owner
 	LicenseNo    sql.NullInt64  `json:"License Number,omitempty"`
-	PlateNo      sql.NullString `json:"Car Plate,omitempty"`
+	PlateNo      sql.NullString `json:"Plate Number,omitempty"`
 	CreationDate string         `json:"Account Creation Date"`
 }
 
@@ -55,8 +55,8 @@ func main() {
 	router.HandleFunc("/api/v1/register/{username}", CreateUser).Methods("POST")
 	router.HandleFunc("/api/v1/user/{username}", GetUser).Methods("GET")
 	router.HandleFunc("/api/v1/updateuser/{username}", UpdateUser).Methods("PUT")
-	// test case: curl http://localhost:5000/api/v1/user/john123/changecarowner -X POST -d "{\"License Number\": 111123335, \"Car Plate\": \"ABC123\"}"
-	router.HandleFunc("/api/v1/user/{username}/changecarowner", ChangeToCarOwner).Methods("PUT")
+	// test case: curl http://localhost:5000/api/v1/changecarowner/naruto55 -X PUT -d "{\"License Number\": 111123335, \"Plate Number\": \"ABC123\"}"
+	router.HandleFunc("/api/v1/changecarowner/{username}", ChangeToCarOwner).Methods("PUT")
 	// handlefunc here which deletes account after its 1 year old/365 days old
 
 	// Endpoint for Car-Pooling Trips
@@ -64,6 +64,32 @@ func main() {
 	//router.HandleFunc("/api/v1/carpoolingtrip/{tripid}", PublishTrip).Methods("POST")
 	fmt.Println("Listening at port 5000")
 	log.Fatal(http.ListenAndServe(":5000", handler))
+}
+
+// Helper function to handle null values in SQL parameters
+func nullOrValue(value interface{}) interface{} {
+	if value == nil {
+		return nil
+	}
+	return value
+}
+
+// Custom unmarshal function for LicenseNo and PlateNo
+func (u *Users) UnmarshalJSON(data []byte) error {
+	type Alias Users
+	aux := &struct {
+		LicenseNumber int    `json:"License Number"`
+		PlateNumber   string `json:"Plate Number"`
+		*Alias
+	}{
+		Alias: (*Alias)(u),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	u.LicenseNo = sql.NullInt64{Int64: int64(aux.LicenseNumber), Valid: true}
+	u.PlateNo = sql.NullString{String: aux.PlateNumber, Valid: aux.PlateNumber != ""}
+	return nil
 }
 
 // ----------------------------- Endpoint for User ----------------------------------------
@@ -233,7 +259,7 @@ func ChangeToCarOwner(w http.ResponseWriter, r *http.Request) {
 	defer tx.Rollback()
 
 	query := "UPDATE Users SET UserGroup=?, LicenseNo=?, PlateNo=? WHERE Username=?"
-	_, err = db.Exec(query, "Car Owner", updateUser.LicenseNo, updateUser.PlateNo, username)
+	_, err = db.Exec(query, "Car Owner", nullOrValue(updateUser.LicenseNo), nullOrValue(updateUser.PlateNo), username)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -245,38 +271,6 @@ func ChangeToCarOwner(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusAccepted)
 	fmt.Fprintf(w, "User %s has been changed to Car Owner!\n", username)
-	/*
-		currentUser := user[username]
-		if currentUser.Usergroup == "Car Owner" {
-			http.Error(w, "User is a Car Owner!", http.StatusBadRequest)
-			return
-		}
-		// Decode the incoming JSON data to update the user to a Car Owner
-		var carOwnerUpdate struct {
-			LicenseNo *int    `json:"License Number"`
-			PlateNo   *string `json:"Car Plate"`
-		}
-
-		err := json.NewDecoder(r.Body).Decode(&carOwnerUpdate)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		// Update the user to a Car Owner
-		newUser := userAttribute{
-			Usergroup:    "Car Owner",
-			Firstname:    currentUser.Firstname,
-			Lastname:     currentUser.Lastname,
-			MobileNumber: currentUser.MobileNumber,
-			EmailAddr:    currentUser.EmailAddr,
-			LicenseNo:    carOwnerUpdate.LicenseNo,
-			PlateNo:      carOwnerUpdate.PlateNo,
-		}
-		user[username] = newUser
-		// Status Code 202 - Accepted
-		w.WriteHeader(http.StatusAccepted)
-		fmt.Fprintf(w, "User %s has been updated to a Car Owner\n", username)*/
 }
 
 /*

@@ -207,6 +207,10 @@ func main() {
 
 	http.Handle("/", mux)
 
+	mux.HandleFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "http://localhost:5001/", http.StatusSeeOther)
+	})
+
 	fmt.Println("Listening at http://localhost:5001")
 	http.ListenAndServe(":5001", nil)
 

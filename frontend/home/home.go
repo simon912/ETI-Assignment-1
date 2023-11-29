@@ -2,7 +2,6 @@
 package home
 
 import (
-	"eti-assignment-1/frontend/profile"
 	"net/http"
 	"text/template"
 )
@@ -49,28 +48,9 @@ const homeTemplate = `
 			document.getElementById('viewProfileContainer').style.display = 'block';
 		}
 		function logOutUser() {
-			fetch('http://localhost:5000/api/v1/logout', {
-				method: 'GET',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-			})
-			.then(response => {
-				if (response.ok) {
-					// Redirect to the login page
-					window.location.href = 'http://localhost:5001/index';
-				} else {
-					throw new Error('Logout failed');
-				}
-			})
-			.catch(error => {
-				// Display an error message or handle the error appropriately
-				showMessage('Logout failed.');
-			});
+			window.location.href = 'http://localhost:5001/';
 		}
 		function retrieveUserData() {
-			
-		
 			// Send a GET request to /api/v1/user/{username} endpoint for user data
 			fetch('http://localhost:5000/api/v1/user/' + username, {
 				method: 'GET',
@@ -207,13 +187,46 @@ const homeTemplate = `
                 console.error('Error updating user:', error.message);
             });
         }
+		function updatetripList(courses) {
+			const tripList = document.getElementById('tripList');
+			tripList.innerHTML = '';
+			courses.forEach(course => {
+				const courseDiv = document.createElement('div');
+				const listItem = document.createElement('p');
+				listItem.innerHTML = "Name: " + course.Name + " [" + course.ID + "]<br>" +
+									 "Planned Intake: " + course['Planned Intake'] + "<br>" +
+									 "Min GPA: " + course['Min GPA'] + "<br>" +
+									 "Max GPA: " + course['Max GPA'];
+				courseDiv.appendChild(listItem);
+				// Button for Enroll
+				const enrollButton = document.createElement('button');
+				enrollButton.type = 'button';
+				enrollButton.textContent = 'Update ' + course.ID;
+				enrollButton.onclick = function() {
+					showUpdateCourse(course.ID);
+				};
+				// Button for Delete
+				const deleteButton = document.createElement('button');
+				deleteButton.type = 'button';
+				deleteButton.textContent = 'Delete ' + course.ID;
+				deleteButton.onclick = function() {
+					deleteCourse(course.ID);
+				};
+		
+				const buttonDiv = document.createElement('div');
+				buttonDiv.appendChild(updateButton);
+				buttonDiv.appendChild(deleteButton);
+				courseDiv.appendChild(buttonDiv);
+				courseList.appendChild(courseDiv);
+			});
+		}
 	</script>
 </head>
 <body>
 	<div id="userButtonList">
 	<button type="button" onclick="showProfileContainer()">View Profile</button>
 	<button type="button" onclick="redirectedToProfile()">View Trips</button>
-	<button type="button" onclick="logOutUser()">Log Out</button>
+	<a href="/logout"><button type="button">Log Out</button></a>
 	</div>
 	<div id="viewProfileContainer">
 		<button type="button" onclick="showChangeCarOwner()">Change to Car Owner</button>
@@ -237,6 +250,9 @@ const homeTemplate = `
 				<input type="text" id="updateEmailAddr" required><br>
 				<button type="button" onclick="updateUserInfo(username)">Update</button>
 			</form>
+	</div>
+	<div id="viewTripContainer">
+		<ul id="tripList"></ul>
 	</div>
     <div id="message"></div>
 </body>
@@ -267,10 +283,4 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-}
-func init() {
-	http.HandleFunc("/redirect-profile", func(w http.ResponseWriter, r *http.Request) {
-		// You may need to import the "profile" package if it's not already imported
-		profile.ProfileHandler(w, r)
-	})
 }

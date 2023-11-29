@@ -4,7 +4,6 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
-	"eti-assignment-1/frontend/profile"
 	"fmt"
 	"log"
 	"net/http"
@@ -30,12 +29,16 @@ type Users struct {
 }
 
 type Trips struct {
+	ID                  int            `json:"ID"`
 	PickUpLocation      string         `json:"Pick-Up Location"`
-	AltPickUpLocation   sql.NullString `json:"Alternate Pick-Up Location"` // can be nullable
+	AltPickUpLocation   sql.NullString `json:"Alternate Pick-Up Location"`
 	StartTravelTime     time.Time      `json:"Start Traveling Time"`
 	DestinationLocation string         `json:"Destination Location"`
 	NoPassengers        int            `json:"Number of Passengers Allowed"`
-	Author              string         `json:"Published By"`
+	Passenger1          sql.NullString `json:"Passenger 1"`
+	Passenger2          sql.NullString `json:"Passenger 2"`
+	Passenger3          sql.NullString `json:"Passenger 3"`
+	Publisher           string         `json:"Published By"`
 }
 
 // Register REST endpoint
@@ -44,7 +47,6 @@ func main() {
 	corsOptions := cors.New(cors.Options{
 		AllowedOrigins: []string{"http://localhost:5001"},
 		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE"},
-		AllowedHeaders: []string{"Content-Type"},
 	})
 	handler := corsOptions.Handler(router)
 
@@ -52,8 +54,6 @@ func main() {
 	//This GET method retrieves the relevant course information.
 	// For Login
 	router.HandleFunc("/api/v1/login/{username}", GetUser).Methods("GET")
-	router.HandleFunc("/api/v1/logout", LogoutHandler).Methods("GET", "PUT", "POST")
-
 	//test case: curl http://localhost:5000/api/v1/user/naruto55 -X POST -d "{\"User Group\":\"Car Owner\", \"First Name\":\"Naruto\", \"Last Name\":\"Uzumaki\", \"Mobile Number\":99987634, \"Email Address\":\"naruto@gmail.com\"}"
 	// For Register
 	router.HandleFunc("/api/v1/register/{username}", CreateUser).Methods("POST")
@@ -61,37 +61,13 @@ func main() {
 	router.HandleFunc("/api/v1/updateuser/{username}", UpdateUser).Methods("PUT")
 	// test case: curl http://localhost:5000/api/v1/changecarowner/naruto55 -X PUT -d "{\"License Number\": 111123335, \"Plate Number\": \"ABC123\"}"
 	router.HandleFunc("/api/v1/changecarowner/{username}", ChangeToCarOwner).Methods("PUT")
-
-	http.HandleFunc("/profile", profile.ProfileHandler)
-	http.HandleFunc("/display-profile", func(w http.ResponseWriter, r *http.Request) {
-		username := r.URL.Query().Get("username")
-		redirectToProfileSuccess(w, r, username)
-	})
-	router.HandleFunc("/redirect-profile/", RedirectProfileHandler).Methods("GET")
 	// handlefunc here which deletes account after its 1 year old/365 days old
 
 	// Endpoint for Car-Pooling Trips
-	//router.HandleFunc("/api/v1/carpoolingtrip", GetAllTrip).Methods("GET")
+	router.HandleFunc("/api/v1/trips", GetAllTrip).Methods("GET")
 	//router.HandleFunc("/api/v1/carpoolingtrip/{tripid}", PublishTrip).Methods("POST")
-	router.Methods("OPTIONS").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5001")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-		w.Header().Set("Content-Type", "text/plain")
-		w.WriteHeader(http.StatusNoContent)
-	})
 	fmt.Println("Listening at port 5000")
 	log.Fatal(http.ListenAndServe(":5000", handler))
-}
-func redirectToProfileSuccess(w http.ResponseWriter, r *http.Request, username string) {
-	http.Redirect(w, r, "http://localhost:5001/profile?username="+username, http.StatusSeeOther)
-}
-func RedirectProfileHandler(w http.ResponseWriter, r *http.Request) {
-	// Extract the username from the query parameters
-	username := r.URL.Query().Get("username")
-
-	// Redirect to the profile page
-	http.Redirect(w, r, "/profile?username="+username, http.StatusSeeOther)
 }
 
 // Helper function to handle null values in SQL parameters
@@ -176,24 +152,6 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("User doesn't exist")
 		http.Error(w, "User not found", http.StatusNotFound)
 	}
-}
-
-func LogoutHandler(w http.ResponseWriter, r *http.Request) {
-	log.Println("Received logout request")
-	if r.Method == "OPTIONS" {
-		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5001")
-		w.Header().Set("Access-Control-Allow-Methods", "GET")
-		// Add other CORS headers as needed
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-
-	// Respond to the actual request (GET)
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5001")
-	// Add other CORS headers as needed
-
-	// Perform the redirect after the actual request is handled
-	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func userExists(username string) bool {
@@ -320,20 +278,41 @@ func ChangeToCarOwner(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "User %s has been changed to Car Owner!\n", username)
 }
 
-/*
 // ----------------------------- Endpoint for Car Pooling Trips ----------------------------------------
 func GetAllTrip(w http.ResponseWriter, r *http.Request) {
-	//test case for retrieve all: curl -X GET http://localhost:5000/api/v1/carpoolingtrip
-	for tripid, carPoolingTrip := range carPoolingTrip {
-		startTime := carPoolingTrip.StartTravelTime.Format("2006-01-02 15:04:05 MST")
-		altPickUpLocation := ""
-		if carPoolingTrip.AltPickUpLocation != nil {
-			altPickUpLocation = *carPoolingTrip.AltPickUpLocation
-		}
-		fmt.Fprintf(w, "Trip ID: %d\nPick-Up Location: %s\nAlternate Pick-Up Location: %s\nStarting Traveling Time: %s\nDestination Location: %s\nNumber of Passengers: %d\nPublished By: %s\n\n", tripid, carPoolingTrip.PickUpLocation, altPickUpLocation, startTime, carPoolingTrip.DestinationLocation, carPoolingTrip.NoPassengers, carPoolingTrip.Author)
+	//test case for retrieve all: curl -X GET http://localhost:5000/api/v1/trips
+	db, err := sql.Open("mysql", "user:password@tcp(127.0.0.1:3306)/carpoolingtrip")
+	// handle error
+	if err != nil {
+		panic(err.Error())
 	}
+	// database operation
+	defer db.Close()
+	results, err := db.Query("SELECT * FROM Trips")
+	if err != nil {
+		panic(err.Error())
+	}
+	var trips []Trips
+	for results.Next() {
+		var t Trips
+		var startTravelTimeStr string
+		err = results.Scan(&t.ID, &t.PickUpLocation, &t.AltPickUpLocation, &startTravelTimeStr, &t.DestinationLocation, &t.NoPassengers, &t.Passenger1, &t.Passenger2, &t.Passenger3, &t.Publisher)
+		if err != nil {
+			panic(err.Error())
+		}
+		t.StartTravelTime, err = time.Parse("15:04:05", startTravelTimeStr)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		fmt.Println(t.ID, t.PickUpLocation, t.AltPickUpLocation, t.StartTravelTime, t.DestinationLocation, t.NoPassengers, t.Passenger1, t.Passenger2, t.Passenger3, t.Publisher)
+		trips = append(trips, t)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(trips)
 }
 
+/*
 // for Car Owner only
 // curl http://localhost:5000/api/v1/carpoolingtrip/3 -X POST -d "{\"Pick-Up Location\":\"Choa Chu Kang Road\", \"Alternate Pick-Up Location\":\"\", \"Start Traveling Time\":\"2023-11-13T10:30:00Z\", \"Destination Location\":\"Bukit Timah Road\", \"Number of Passengers Allowed\":4, \"Published By\":\"jane456\"}"
 func PublishTrip(w http.ResponseWriter, r *http.Request) {

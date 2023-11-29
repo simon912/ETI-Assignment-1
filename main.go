@@ -38,7 +38,7 @@ type Trips struct {
 	Passenger1          sql.NullString `json:"Passenger 1"`
 	Passenger2          sql.NullString `json:"Passenger 2"`
 	Passenger3          sql.NullString `json:"Passenger 3"`
-	Publisher           string         `json:"Published By"`
+	Publisher           string         `json:"Publisher"`
 }
 
 // Register REST endpoint

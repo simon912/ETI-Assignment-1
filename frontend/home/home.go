@@ -19,13 +19,7 @@ const homeTemplate = `
     #message {
         display: none;
     }
-	#updateUserContainer {
-		display: none;
-	}
-	#changeCarOwnerContainer {
-		display: none;
-	}
-	#viewProfileContainer {
+	#updateUserContainer, #changeCarOwnerContainer, #viewProfileContainer, #viewTripContainer {
 		display: none;
 	}
 </style>
@@ -46,6 +40,7 @@ const homeTemplate = `
         }
 		function showProfileContainer() {
 			document.getElementById('viewProfileContainer').style.display = 'block';
+			document.getElementById('viewTripContainer').style.display = 'none';
 		}
 		function logOutUser() {
 			window.location.href = 'http://localhost:5001/';
@@ -187,45 +182,68 @@ const homeTemplate = `
                 console.error('Error updating user:', error.message);
             });
         }
-		function updatetripList(courses) {
+		// For Trip
+		function showTripsContainer() {
+			getAllTrips();
+    		document.getElementById('viewProfileContainer').style.display = 'none';
+    		document.getElementById('viewTripContainer').style.display = 'block';
+    		document.getElementById('message').style.display = 'none';
+		}
+		function getAllTrips() {
+			var xhr = new XMLHttpRequest();
+			xhr.open('GET', 'http://localhost:5000/api/v1/trips', true);
+		
+			xhr.onload = function () {
+				if (xhr.status >= 200 && xhr.status < 300) {
+					console.log('Raw Response:', xhr.responseText);
+		
+					if (xhr.responseText.trim() !== "") {
+						try {
+							var data = JSON.parse(xhr.responseText);
+							console.log('Trips:', data);
+							updateTripList(data);
+                            document.getElementById('viewTripContainer').style.display = 'block';
+                            document.getElementById('viewProfileContainer').style.display = 'none';
+                            document.getElementById('message').style.display = 'none';
+						} catch (error) {
+							console.error('Error parsing JSON:', error);
+						}
+					} else {
+						console.error('Error: Empty response body');
+					}
+				} else {
+					console.error('Error:', xhr.status, xhr.statusText);
+				}
+			};
+		
+			xhr.onerror = function () {
+				console.error('Network error occurred');
+			};
+			xhr.send();
+		}
+		
+		function updateTripList(trips) {
 			const tripList = document.getElementById('tripList');
 			tripList.innerHTML = '';
-			courses.forEach(course => {
-				const courseDiv = document.createElement('div');
-				const listItem = document.createElement('p');
-				listItem.innerHTML = "Name: " + course.Name + " [" + course.ID + "]<br>" +
-									 "Planned Intake: " + course['Planned Intake'] + "<br>" +
-									 "Min GPA: " + course['Min GPA'] + "<br>" +
-									 "Max GPA: " + course['Max GPA'];
-				courseDiv.appendChild(listItem);
-				// Button for Enroll
-				const enrollButton = document.createElement('button');
-				enrollButton.type = 'button';
-				enrollButton.textContent = 'Update ' + course.ID;
-				enrollButton.onclick = function() {
-					showUpdateCourse(course.ID);
-				};
-				// Button for Delete
-				const deleteButton = document.createElement('button');
-				deleteButton.type = 'button';
-				deleteButton.textContent = 'Delete ' + course.ID;
-				deleteButton.onclick = function() {
-					deleteCourse(course.ID);
-				};
-		
-				const buttonDiv = document.createElement('div');
-				buttonDiv.appendChild(updateButton);
-				buttonDiv.appendChild(deleteButton);
-				courseDiv.appendChild(buttonDiv);
-				courseList.appendChild(courseDiv);
-			});
+    		trips.forEach(trip => {
+        		const tripDiv = document.createElement('div');
+        		const listItem = document.createElement('p');
+        		listItem.innerHTML = "ID: " + trip.ID + "<br>" +
+                             "Pick-Up Location: " + trip['Pick-Up Location'] + "<br>" +
+                             "Alternate Pick-Up Location: " + trip['Alternate Pick-Up Location'] + "<br>" +
+                             "Start Traveling Time: " + trip['Start Traveling Time'] + "<br>" +
+                             "Destination Location: " + trip['Destination Location'] + "<br>" +
+                             "Published By: " + trip['Publisher'];
+        		tripDiv.appendChild(listItem);
+        		tripList.appendChild(tripDiv);
+    		});
 		}
 	</script>
 </head>
 <body>
 	<div id="userButtonList">
 	<button type="button" onclick="showProfileContainer()">View Profile</button>
-	<button type="button" onclick="redirectedToProfile()">View Trips</button>
+	<button type="button" onclick="showTripsContainer()">View Trips</button>
 	<a href="/logout"><button type="button">Log Out</button></a>
 	</div>
 	<div id="viewProfileContainer">
@@ -250,6 +268,7 @@ const homeTemplate = `
 				<input type="text" id="updateEmailAddr" required><br>
 				<button type="button" onclick="updateUserInfo(username)">Update</button>
 			</form>
+		</div>
 	</div>
 	<div id="viewTripContainer">
 		<ul id="tripList"></ul>

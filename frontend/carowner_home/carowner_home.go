@@ -1,12 +1,12 @@
 // home.go - the page that the user is redirected to from index.go
-package home
+package carowner_home
 
 import (
 	"net/http"
 	"text/template"
 )
 
-const homeTemplate = `
+const carownerTemplate = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,6 +14,7 @@ const homeTemplate = `
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Car Pooling Trip - Home</title>
 	<h1>Welcome to the Car Pooling Trip Platform!</h1>
+	<h1>Car Owner Redirection Test</h1>
 	<h2>Welcome <span id="usergroupspan"></span> <span id="firstnamespan"></span> <span id="lastnamespan"></span></h2>
 	<style>
     #message {
@@ -279,7 +280,7 @@ const homeTemplate = `
 `
 
 // ProfileHandler handles requests to the profile page
-func HomeHandler(w http.ResponseWriter, r *http.Request) {
+func CarOwnerHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Extract username from the URL
 	username := r.URL.Query().Get("username")
@@ -291,7 +292,7 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 		Username: username,
 	}
 
-	tmpl, err := template.New("home").Parse(homeTemplate)
+	tmpl, err := template.New("home").Parse(carownerTemplate)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

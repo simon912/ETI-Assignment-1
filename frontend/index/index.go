@@ -2,19 +2,13 @@
 package main
 
 import (
-	"database/sql"
-	"eti-assignment-1/frontend/home"
+	carowner_home "eti-assignment-1/frontend/carowner_home"
+	passenger_home "eti-assignment-1/frontend/passenger_home"
 	"fmt"
 	"html/template"
 	"net/http"
-	"sync"
 
 	_ "github.com/go-sql-driver/mysql"
-)
-
-var (
-	db      *sql.DB
-	usersMu sync.RWMutex
 )
 
 const htmlTemplate = `
@@ -91,8 +85,15 @@ const htmlTemplate = `
         	.then(data => {
             	// Check if the password from the response matches the entered password
             	if (data && data.Password === password) {
-                	window.location.href = '/home?username=' + encodeURIComponent(username);
-            	}
+					// Check user group and redirect accordingly
+					if (data['User Group'] === 'Passenger') {
+						window.location.href = '/passenger_home?username=' + encodeURIComponent(username);
+					} else if (data['User Group'] === 'Car Owner') {
+						window.location.href = '/carowner_home?username=' + encodeURIComponent(username);
+					} else {
+						showMessage('Invalid user group');
+					}
+				}
         	})
         	.catch(error => {
             	// Display an error message or handle the error appropriately
@@ -198,7 +199,8 @@ func main() {
 	})
 
 	// Handle home route using the home package handler
-	mux.HandleFunc("/home", home.HomeHandler)
+	mux.HandleFunc("/passenger_home", passenger_home.PassengerHandler)
+	mux.HandleFunc("/carowner_home", carowner_home.CarOwnerHandler)
 	mux.HandleFunc("/login-success", func(w http.ResponseWriter, r *http.Request) {
 		// Extract username from the URL
 		username := r.URL.Query().Get("username")

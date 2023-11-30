@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -66,6 +67,7 @@ func main() {
 	// Endpoint for Car-Pooling Trips
 	router.HandleFunc("/api/v1/trips", GetAllTrip).Methods("GET")
 	//router.HandleFunc("/api/v1/carpoolingtrip/{tripid}", PublishTrip).Methods("POST")
+	router.HandleFunc("/api/v1/enroll/{tripid}/{username}", EnrollUser).Methods("PUT")
 	fmt.Println("Listening at port 5000")
 	log.Fatal(http.ListenAndServe(":5000", handler))
 }
@@ -310,6 +312,130 @@ func GetAllTrip(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(trips)
+}
+
+func EnrollUser(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	tripID := params["tripid"]
+	username := params["username"]
+
+	// Convert tripID to int
+	tripIDInt, err := strconv.Atoi(tripID)
+	if err != nil {
+		http.Error(w, "Invalid trip ID", http.StatusBadRequest)
+		return
+	}
+
+	// Check if the trip exists
+	trip, found := getTripByID(tripIDInt)
+	if !found {
+		http.Error(w, "Trip not found", http.StatusNotFound)
+		return
+	}
+
+	// Check if the trip is full
+	if trip.NoPassengers <= 0 {
+		http.Error(w, "Trip is already full", http.StatusBadRequest)
+		return
+	}
+
+	// Check if the user is already enrolled in the trip
+	if isUserEnrolled(username, trip) {
+		http.Error(w, "User is already enrolled in this trip", http.StatusBadRequest)
+		return
+	}
+
+	// Update the trip and decrement the available passenger slots
+	updateTrip(tripIDInt, username, trip)
+
+	// Return success response
+	w.WriteHeader(http.StatusAccepted)
+	fmt.Fprintf(w, "User %s has been enrolled in trip ID %s!\n", username, tripID)
+}
+
+// Helper function to get a trip by ID
+func getTripByID(tripID int) (Trips, bool) {
+	// Database query to get the trip by ID
+	db, err := sql.Open("mysql", "user:password@tcp(127.0.0.1:3306)/carpoolingtrip")
+	if err != nil {
+		// Handle error
+		fmt.Printf("Error opening database: %v\n", err)
+		return Trips{}, false
+	}
+	defer db.Close()
+
+	query := "SELECT * FROM Trips WHERE ID = ?"
+	var t Trips
+	var startTravelTimeStr string
+	err = db.QueryRow(query, tripID).Scan(
+		&t.ID, &t.PickUpLocation, &t.AltPickUpLocation, &startTravelTimeStr, &t.DestinationLocation,
+		&t.NoPassengers, &t.Passenger1, &t.Passenger2, &t.Passenger3, &t.Publisher,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			fmt.Printf("Trip with ID %d not found\n", tripID)
+			return Trips{}, false
+		}
+		// Handle other errors
+		fmt.Printf("Error querying database: %v\n", err)
+		return Trips{}, false
+	}
+
+	// Parse the StartTravelTime string into a time.Time value
+	t.StartTravelTime, err = time.Parse("15:04:05", startTravelTimeStr)
+	if err != nil {
+		fmt.Printf("Error parsing StartTravelTime: %v\n", err)
+		return Trips{}, false
+	}
+
+	return t, true
+}
+
+// Helper function to check if a user is already enrolled in the trip
+func isUserEnrolled(username string, trip Trips) bool {
+	if trip.Passenger1.Valid && trip.Passenger1.String == username {
+		return true
+	}
+	if trip.Passenger2.Valid && trip.Passenger2.String == username {
+		return true
+	}
+	if trip.Passenger3.Valid && trip.Passenger3.String == username {
+		return true
+	}
+	return false
+}
+
+// Helper function to update the trip and decrement the available passenger slots
+func updateTrip(tripID int, username string, trip Trips) {
+	// Update the trip with the new passenger
+	db, err := sql.Open("mysql", "user:password@tcp(127.0.0.1:3306)/carpoolingtrip")
+	if err != nil {
+		// Handle error
+		return
+	}
+	defer db.Close()
+
+	// Identify the empty slot in the passenger list
+	var passengerField string
+	if trip.Passenger1.Valid && trip.Passenger2.Valid && trip.Passenger3.Valid {
+		// All passenger slots are full
+		return
+	} else if !trip.Passenger1.Valid {
+		passengerField = "Passenger1"
+	} else if !trip.Passenger2.Valid {
+		passengerField = "Passenger2"
+	} else if !trip.Passenger3.Valid {
+		passengerField = "Passenger3"
+	}
+
+	// Update the trip with the new passenger
+	query := fmt.Sprintf("UPDATE Trips SET %s=?, PassengerNo=? WHERE ID=?", passengerField)
+	_, err = db.Exec(query, username, trip.NoPassengers-1, tripID)
+	if err != nil {
+		// Handle error
+		fmt.Printf("Error updating trip: %v\n", err)
+		return
+	}
 }
 
 /*

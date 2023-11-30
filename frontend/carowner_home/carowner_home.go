@@ -248,7 +248,6 @@ const carownerTemplate = `
 	<a href="/logout"><button type="button">Log Out</button></a>
 	</div>
 	<div id="viewProfileContainer">
-		<button type="button" onclick="showChangeCarOwner()">Change to Car Owner</button>
 		<button type="button" onclick="showUserInfo()">Update Profile</button>
 		<div id="changeCarOwnerContainer">
 			<form id="changeCarOwnerForm">

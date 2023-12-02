@@ -119,7 +119,7 @@ const htmlTemplate = `
 					Password: password,
 					"First Name": firstname,
 					"Last Name": lastname,
-					"Mobile Number": parseInt(mobileNumber), // assuming MobileNumber is an integer
+					"Mobile Number": parseInt(mobileNumber),
 					"Email Address": email,
 				}),
 			})

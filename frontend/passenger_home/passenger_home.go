@@ -182,6 +182,25 @@ const passengerTemplate = `
                 console.error('Error updating user:', error.message);
             });
         }
+		function deleteUser(username) {
+			fetch('http://localhost:5000/api/v1/delete/' + username, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => {
+                if (response.ok) {
+                    document.getElementById('message').style.display = 'block';
+                    document.getElementById('message').textContent = 'User ' + username + ' deleted, you will be logged out';
+                } else {
+                    throw new Error('User deletion failed');
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting user:', error.message);
+            });
+		}
 		// For Trip
 		function showTripsContainer() {
 			getAllTrips();
@@ -228,15 +247,33 @@ const passengerTemplate = `
     		trips.forEach(trip => {
         		const tripDiv = document.createElement('div');
         		const listItem = document.createElement('p');
+
+				const alternatePickUpLocation = trip['Alternate Pick-Up Location'] ? trip['Alternate Pick-Up Location']['String'] : '';
+				const startTravelingTime = new Date(trip['Start Traveling Time']);
+				const formattedStartTime = startTravelingTime.toLocaleTimeString();
         		listItem.innerHTML = "ID: " + trip.ID + "<br>" +
                              "Pick-Up Location: " + trip['Pick-Up Location'] + "<br>" +
-                             "Alternate Pick-Up Location: " + trip['Alternate Pick-Up Location'] + "<br>" +
-                             "Start Traveling Time: " + trip['Start Traveling Time'] + "<br>" +
+                             "Alternate Pick-Up Location: " + alternatePickUpLocation + "<br>" +
+                             "Start Traveling Time: " +  formattedStartTime + "<br>" +
                              "Destination Location: " + trip['Destination Location'] + "<br>" +
+							 "Vacancies: " + trip['Number of Passengers Allowed'] + "<br>" +
                              "Published By: " + trip['Publisher'];
         		tripDiv.appendChild(listItem);
+				// Button for Viewing the Detail
+        		const enrollButton = document.createElement('button');
+        		enrollButton.type = 'button';
+        		enrollButton.textContent = 'Enroll into Trip ID ' + trip.ID;
+        		enrollButton.onclick = function() {
+            		
+        		};
+				const buttonDiv = document.createElement('div');
+        		buttonDiv.appendChild(enrollButton);
+				tripDiv.appendChild(buttonDiv);
         		tripList.appendChild(tripDiv);
     		});
+		}
+		function enrollTrip() {
+
 		}
 	</script>
 </head>
@@ -249,6 +286,7 @@ const passengerTemplate = `
 	<div id="viewProfileContainer">
 		<button type="button" onclick="showChangeCarOwner()">Change to Car Owner</button>
 		<button type="button" onclick="showUserInfo()">Update Profile</button>
+		<button type="button" onclick="showUserInfo()">Delete Profile</button>
 		<div id="changeCarOwnerContainer">
 			<form id="changeCarOwnerForm">
 				<label for="carownerLicenseNo">Your Driver's License Number:</label>

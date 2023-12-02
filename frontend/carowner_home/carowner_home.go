@@ -15,6 +15,7 @@ const carownerTemplate = `
     <title>Car Pooling Trip - Home</title>
 	<h1>Welcome to the Car Pooling Trip Platform!</h1>
 	<h2>Welcome <span id="usergroupspan"></span> <span id="firstnamespan"></span> <span id="lastnamespan"></span></h2>
+	<h2>Car Owner Redirection Test </h2>
 	<style>
     #message {
         display: none;

@@ -149,6 +149,7 @@ const passengerTemplate = `
                     document.getElementById('updateUserForm').style.display = 'none';
                     document.getElementById('message').style.display = 'block';
                     document.getElementById('message').textContent = "User " + username + "'s info updated successfully";
+					
                 } else {
                     throw new Error('User update failed');
                 }
@@ -184,6 +185,8 @@ const passengerTemplate = `
             });
         }
 		function showDeleteConfirmation() {
+			document.getElementById('changeCarOwnerContainer').style.display = 'none';
+			document.getElementById('updateUserContainer').style.display = 'none';
 			document.getElementById('confirmDeleteContainer').style.display = 'block';
 		}
 		function deleteUser(username) {
@@ -249,6 +252,8 @@ const passengerTemplate = `
 		}
 		
 		function updateTripList(trips) {
+			// Sorting in reverse chronological order
+			trips.sort((a, b) => new Date(b['Start Traveling Time']) - new Date(a['Start Traveling Time']));
 			const tripList = document.getElementById('tripList');
 			tripList.innerHTML = '';
     		trips.forEach(trip => {
@@ -271,7 +276,8 @@ const passengerTemplate = `
         		enrollButton.type = 'button';
         		enrollButton.textContent = 'Enroll into Trip ID ' + trip.ID;
         		enrollButton.onclick = function() {
-            		
+					const tripID = trip.ID;
+    				enrollTrip(tripID, username);
         		};
 				const buttonDiv = document.createElement('div');
         		buttonDiv.appendChild(enrollButton);
@@ -279,8 +285,29 @@ const passengerTemplate = `
         		tripList.appendChild(tripDiv);
     		});
 		}
-		function enrollTrip() {
-
+		function enrollTrip(tripID, username) {
+			fetch('http://localhost:5000/api/v1/enroll/' + tripID + '/' + username, {
+				method: 'PUT',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				// You can include a request body if needed
+				// body: JSON.stringify({ /* your data here */ }),
+			})
+			.then(response => {
+				if (response.ok) {
+					// Handle success, e.g., show a success message
+					showMessage('Enrolled successfully in Trip ID ' + tripID);
+				} else {
+					// Handle error, e.g., show an error message
+					showMessage('Failed to enroll in the trip');
+				}
+			})
+			.catch(error => {
+				// Handle network errors or other issues
+				console.error('Error enrolling in trip:', error.message);
+				showMessage('Failed to enroll in the trip. Please try again.');
+			});
 		}
 	</script>
 </head>

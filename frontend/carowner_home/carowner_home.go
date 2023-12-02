@@ -14,7 +14,6 @@ const carownerTemplate = `
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Car Pooling Trip - Home</title>
 	<h1>Welcome to the Car Pooling Trip Platform!</h1>
-	<h1>Car Owner Redirection Test</h1>
 	<h2>Welcome <span id="usergroupspan"></span> <span id="firstnamespan"></span> <span id="lastnamespan"></span></h2>
 	<style>
     #message {
@@ -42,6 +41,7 @@ const carownerTemplate = `
 		function showProfileContainer() {
 			document.getElementById('viewProfileContainer').style.display = 'block';
 			document.getElementById('viewTripContainer').style.display = 'none';
+			document.getElementById('confirmDeleteContainer').style.display = 'none';
 		}
 		function logOutUser() {
 			window.location.href = 'http://localhost:5001/';
@@ -183,6 +183,32 @@ const carownerTemplate = `
                 console.error('Error updating user:', error.message);
             });
         }
+		function showDeleteConfirmation() {
+			document.getElementById('confirmDeleteContainer').style.display = 'block';
+		}
+		function deleteUser(username) {
+			fetch('http://localhost:5000/api/v1/delete/' + username, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => {
+                if (response.ok) {
+                    document.getElementById('message').style.display = 'block';
+                    document.getElementById('message').textContent = 'User ' + username + ' deleted, you will be logged out';
+					window.location.href = 'http://localhost:5001/';
+                } else {
+                    throw new Error('User deletion failed. The user needs to be over 1 year old to be deleted.');
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting user:', error.message);
+				document.getElementById('message').style.display = 'block';
+				document.getElementById('message').innerHTML = '<p style="color: red;">Error: ' + error.message + '</p>';
+    	});
+            
+		}
 		// For Trip
 		function showTripsContainer() {
 			getAllTrips();
@@ -216,7 +242,6 @@ const carownerTemplate = `
 					console.error('Error:', xhr.status, xhr.statusText);
 				}
 			};
-		
 			xhr.onerror = function () {
 				console.error('Network error occurred');
 			};
@@ -229,15 +254,33 @@ const carownerTemplate = `
     		trips.forEach(trip => {
         		const tripDiv = document.createElement('div');
         		const listItem = document.createElement('p');
+
+				const alternatePickUpLocation = trip['Alternate Pick-Up Location'] ? trip['Alternate Pick-Up Location']['String'] : '';
+				const startTravelingTime = new Date(trip['Start Traveling Time']);
+				const formattedStartTime = startTravelingTime.toLocaleTimeString();
         		listItem.innerHTML = "ID: " + trip.ID + "<br>" +
                              "Pick-Up Location: " + trip['Pick-Up Location'] + "<br>" +
-                             "Alternate Pick-Up Location: " + trip['Alternate Pick-Up Location'] + "<br>" +
-                             "Start Traveling Time: " + trip['Start Traveling Time'] + "<br>" +
+                             "Alternate Pick-Up Location: " + alternatePickUpLocation + "<br>" +
+                             "Start Traveling Time: " +  formattedStartTime + "<br>" +
                              "Destination Location: " + trip['Destination Location'] + "<br>" +
+							 "Vacancies: " + trip['Number of Passengers Allowed'] + "<br>" +
                              "Published By: " + trip['Publisher'];
         		tripDiv.appendChild(listItem);
+				// Button for Viewing the Detail
+        		const enrollButton = document.createElement('button');
+        		enrollButton.type = 'button';
+        		enrollButton.textContent = 'Enroll into Trip ID ' + trip.ID;
+        		enrollButton.onclick = function() {
+            		
+        		};
+				const buttonDiv = document.createElement('div');
+        		buttonDiv.appendChild(enrollButton);
+				tripDiv.appendChild(buttonDiv);
         		tripList.appendChild(tripDiv);
     		});
+		}
+		function enrollTrip() {
+
 		}
 	</script>
 </head>
@@ -248,7 +291,9 @@ const carownerTemplate = `
 	<a href="/logout"><button type="button">Log Out</button></a>
 	</div>
 	<div id="viewProfileContainer">
+		<button type="button" onclick="showChangeCarOwner()">Change to Car Owner</button>
 		<button type="button" onclick="showUserInfo()">Update Profile</button>
+		<button type="button" onclick="showDeleteConfirmation()">Delete Profile</button>
 		<div id="changeCarOwnerContainer">
 			<form id="changeCarOwnerForm">
 				<label for="carownerLicenseNo">Your Driver's License Number:</label>
@@ -257,6 +302,12 @@ const carownerTemplate = `
 				<input type="text" id="carownerCarPlateNo" required><br>
 				<button type="button" onclick="changeCarOwner(username)">Change to Car Owner</button>
 			</form>
+		</div>
+		<div id="confirmDeleteContainer">
+			<span>Are you sure you want to delete your user?</span>
+			<div>
+				<button type="button" onclick="deleteUser(username)">Delete</button>
+			</div>
 		</div>
 		<div id="updateUserContainer">
 			<form id="updateUserForm">

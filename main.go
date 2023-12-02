@@ -313,7 +313,20 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	// Check if the user is over 1 year old (365 days)
 	if age >= 365 {
-		// If the user is over 1 year old, user will be deleted
+		// Check if the user is referenced in the trips table
+		tripsReferenced, err := isUserReferencedInTrips(db, username)
+		if err != nil {
+			fmt.Printf("Error checking references in Trips table: %v\n", err)
+			http.Error(w, "Error checking references in Trips table", http.StatusInternalServerError)
+			return
+		}
+
+		if tripsReferenced {
+			http.Error(w, "User cannot be deleted. User has already published Trip(s).", http.StatusBadRequest)
+			return
+		}
+
+		// If the user is over 1 year old and not referenced in trips, delete the user
 		deleteUser(w, username)
 	} else {
 		// If the user is not over 1 year old, return error

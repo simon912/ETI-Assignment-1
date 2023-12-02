@@ -41,6 +41,7 @@ const passengerTemplate = `
 		function showProfileContainer() {
 			document.getElementById('viewProfileContainer').style.display = 'block';
 			document.getElementById('viewTripContainer').style.display = 'none';
+			document.getElementById('confirmDeleteContainer').style.display = 'none';
 		}
 		function logOutUser() {
 			window.location.href = 'http://localhost:5001/';
@@ -182,6 +183,9 @@ const passengerTemplate = `
                 console.error('Error updating user:', error.message);
             });
         }
+		function showDeleteConfirmation() {
+			document.getElementById('confirmDeleteContainer').style.display = 'block';
+		}
 		function deleteUser(username) {
 			fetch('http://localhost:5000/api/v1/delete/' + username, {
                 method: 'DELETE',
@@ -193,13 +197,17 @@ const passengerTemplate = `
                 if (response.ok) {
                     document.getElementById('message').style.display = 'block';
                     document.getElementById('message').textContent = 'User ' + username + ' deleted, you will be logged out';
+					window.location.href = 'http://localhost:5001/';
                 } else {
-                    throw new Error('User deletion failed');
+                    throw new Error('User deletion failed. The user needs to be over 1 year old to be deleted.');
                 }
             })
             .catch(error => {
                 console.error('Error deleting user:', error.message);
-            });
+				document.getElementById('message').style.display = 'block';
+				document.getElementById('message').innerHTML = '<p style="color: red;">Error: ' + error.message + '</p>';
+    	});
+            
 		}
 		// For Trip
 		function showTripsContainer() {
@@ -234,7 +242,6 @@ const passengerTemplate = `
 					console.error('Error:', xhr.status, xhr.statusText);
 				}
 			};
-		
 			xhr.onerror = function () {
 				console.error('Network error occurred');
 			};
@@ -286,7 +293,7 @@ const passengerTemplate = `
 	<div id="viewProfileContainer">
 		<button type="button" onclick="showChangeCarOwner()">Change to Car Owner</button>
 		<button type="button" onclick="showUserInfo()">Update Profile</button>
-		<button type="button" onclick="showUserInfo()">Delete Profile</button>
+		<button type="button" onclick="showDeleteConfirmation()">Delete Profile</button>
 		<div id="changeCarOwnerContainer">
 			<form id="changeCarOwnerForm">
 				<label for="carownerLicenseNo">Your Driver's License Number:</label>
@@ -295,6 +302,12 @@ const passengerTemplate = `
 				<input type="text" id="carownerCarPlateNo" required><br>
 				<button type="button" onclick="changeCarOwner(username)">Change to Car Owner</button>
 			</form>
+		</div>
+		<div id="confirmDeleteContainer">
+			<span>Are you sure you want to delete your user?</span>
+			<div>
+				<button type="button" onclick="deleteUser(username)">Delete</button>
+			</div>
 		</div>
 		<div id="updateUserContainer">
 			<form id="updateUserForm">

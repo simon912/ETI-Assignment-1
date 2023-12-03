@@ -1,4 +1,4 @@
-// home.go - the page that the user is redirected to from index.go
+// passenger_home.go - the page that the user is redirected to from index.go if their user group is passenger
 package passenger_home
 
 import (
@@ -114,17 +114,15 @@ const passengerTemplate = `
 				// Display an error message or handle the error appropriately
 				showMessage('Failed to retrieve user data.');
 			});
-			const updateUserContainer = document.getElementById('updateUserContainer');
-			const changeCarOwnerContainer = document.getElementById('changeCarOwnerContainer');
-			updateUserContainer.style.display = 'block';
-			changeCarOwnerContainer.style.display = 'none';
             document.getElementById('updateUserForm').style.display = 'block';
+			document.getElementById('changeCarOwnerContainer').style.display = 'none';
+			document.getElementById('confirmDeleteContainer').style.display = 'none';
+			document.getElementById('updateUserContainer').style.display = 'block';
 		}
 		function showChangeCarOwner() {
-			const updateUserContainer = document.getElementById('updateUserContainer');
-			const changeCarOwnerContainer = document.getElementById('changeCarOwnerContainer');
-			updateUserContainer.style.display = 'none';
-			changeCarOwnerContainer.style.display = 'block';
+			document.getElementById('updateUserContainer').style.display = 'none';
+			document.getElementById('changeCarOwnerContainer').style.display = 'block';
+			document.getElementById('confirmDeleteContainer').style.display = 'none';
 
 			document.getElementById('carownerLicenseNo').value = '';
 			document.getElementById('carownerCarPlateNo').value = '';
@@ -218,6 +216,7 @@ const passengerTemplate = `
     		document.getElementById('viewProfileContainer').style.display = 'none';
     		document.getElementById('viewTripContainer').style.display = 'block';
     		document.getElementById('message').style.display = 'none';
+			document.getElementById('confirmDeleteContainer').style.display = 'none';
 		}
 		function getAllTrips() {
 			var xhr = new XMLHttpRequest();

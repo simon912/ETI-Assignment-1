@@ -33,7 +33,7 @@ type Trips struct {
 	ID                  int            `json:"ID"`
 	PickUpLocation      string         `json:"Pick-Up Location"`
 	AltPickUpLocation   sql.NullString `json:"Alternate Pick-Up Location"`
-	StartTravelTime     time.Time      `json:"Start Traveling Time"`
+	StartTravelTime     string         `json:"Start Traveling Time"`
 	DestinationLocation string         `json:"Destination Location"`
 	NoPassengers        int            `json:"Number of Passengers Allowed"`
 	Passenger1          sql.NullString `json:"Passenger 1"`
@@ -83,7 +83,7 @@ func nullOrValue(value interface{}) interface{} {
 	return value
 }
 
-// Custom unmarshal function for LicenseNo
+// Custom unmarshal function for LicenseNumber & PlateNumber
 func (u *Users) UnmarshalJSON(data []byte) error {
 	type Alias Users
 	aux := &struct {
@@ -410,78 +410,18 @@ func GetAllTrip(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			panic(err.Error())
 		}
-		t.StartTravelTime, err = time.Parse("15:04:05", startTravelTimeStr)
+		// Parse the time string and set it in the Trips struct
+		parsedTime, err := time.Parse("15:04:05", startTravelTimeStr)
 		if err != nil {
-			panic(err.Error())
+			// Handle the error, e.g., log it and proceed with a default value
+			fmt.Printf("Error parsing time for Trip ID %d: %v\n", t.ID, err)
+			parsedTime = time.Time{} // Default to zero time
 		}
-
-		fmt.Println(t.ID, t.PickUpLocation, t.AltPickUpLocation, t.StartTravelTime, t.DestinationLocation, t.NoPassengers, t.Passenger1, t.Passenger2, t.Passenger3, t.Publisher)
+		t.StartTravelTime = parsedTime.Format(time.RFC3339)
 		trips = append(trips, t)
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(trips)
-}
-
-func GetTrip(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	tripID := params["tripid"]
-	db, err := sql.Open("mysql", "user:password@tcp(127.0.0.1:3306)/carpoolingtrip")
-
-	if err != nil {
-		panic(err.Error())
-	}
-	defer db.Close()
-
-	query := "SELECT * FROM Trips WHERE ID = ?"
-	result, err := db.Query(query, tripID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer result.Close()
-
-	found := false
-	for result.Next() {
-		var t Trips
-		err = result.Scan(&t.ID, &t.PickUpLocation, &t.AltPickUpLocation, &t.StartTravelTime, &t.DestinationLocation, &t.NoPassengers, &t.Passenger1, &t.Passenger2, &t.Passenger3, &t.Publisher)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		response := struct {
-			ID                  int            `json:"ID"`
-			PickUpLocation      string         `json:"Pick-Up Location"`
-			AltPickUpLocation   sql.NullString `json:"Alternate Pick-Up Location"`
-			StartTravelTime     time.Time      `json:"Start Traveling Time"`
-			DestinationLocation string         `json:"Destination Location"`
-			NoPassengers        int            `json:"Number of Passengers Allowed"`
-			Passenger1          sql.NullString `json:"Passenger 1"`
-			Passenger2          sql.NullString `json:"Passenger 2"`
-			Passenger3          sql.NullString `json:"Passenger 3"`
-			Publisher           string         `json:"Publisher"`
-		}{
-			ID:                  t.ID,
-			PickUpLocation:      t.PickUpLocation,
-			AltPickUpLocation:   t.AltPickUpLocation,
-			StartTravelTime:     t.StartTravelTime,
-			DestinationLocation: t.DestinationLocation,
-			NoPassengers:        t.NoPassengers,
-			Passenger1:          t.Passenger1,
-			Passenger2:          t.Passenger2,
-			Passenger3:          t.Passenger3,
-			Publisher:           t.Publisher,
-		}
-
-		// Convert the response to JSON and send it
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(response)
-
-		found = true
-	}
-	if !found {
-		fmt.Println("Trip doesn't exist")
-		http.Error(w, "Trip not found", http.StatusNotFound)
-	}
 }
 
 func EnrollUser(w http.ResponseWriter, r *http.Request) {
@@ -551,13 +491,6 @@ func getTripByID(tripID int) (Trips, bool) {
 		return Trips{}, false
 	}
 
-	// Parse the StartTravelTime string into a time.Time value
-	t.StartTravelTime, err = time.Parse("15:04:05", startTravelTimeStr)
-	if err != nil {
-		fmt.Printf("Error parsing StartTravelTime: %v\n", err)
-		return Trips{}, false
-	}
-
 	return t, true
 }
 
@@ -608,10 +541,31 @@ func updateTrip(tripID int, username string, trip Trips) {
 	}
 }
 
-/*
 // for Car Owner only
-// curl http://localhost:5000/api/v1/publishtrip/jane456 -X POST -d "{\"Pick-Up Location\":\"Choa Chu Kang Road\", \"Alternate Pick-Up Location\":\"\", \"Start Traveling Time\":\"2023-11-13T10:30:00Z\", \"Destination Location\":\"Bukit Timah Road\", \"Number of Passengers Allowed\":3}"
-*/
+
+// Custom unmarshal function for LicenseNo
+func (t *Trips) UnmarshalJSON(data []byte) error {
+	type Alias Trips
+	aux := &struct {
+		AltPickUpLocation string `json:"Alternate Pick-Up Location"`
+		Passenger1        string `json:"Passenger 1"`
+		Passenger2        string `json:"Passenger 2"`
+		Passenger3        string `json:"Passenger 3"`
+		*Alias
+	}{
+		Alias: (*Alias)(t),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	t.AltPickUpLocation = sql.NullString{String: aux.AltPickUpLocation, Valid: aux.AltPickUpLocation != ""}
+	t.Passenger1 = sql.NullString{String: aux.Passenger1, Valid: aux.Passenger1 != ""}
+	t.Passenger2 = sql.NullString{String: aux.Passenger2, Valid: aux.Passenger2 != ""}
+	t.Passenger3 = sql.NullString{String: aux.Passenger3, Valid: aux.Passenger3 != ""}
+	return nil
+}
+
+// curl -X POST http://localhost:5000/api/v1/publishtrip/naruto55 -d "{\"Pick-Up Location\":\"Boon Lay Road\",\"Alternate Pick-Up Location\":\"\",\"Start Traveling Time\":\"2023-11-13T10:30:00Z\",\"Destination Location\":\"Bukit Timah Road\",\"Number of Passengers Allowed\":3}"
 func PublishTrip(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	username := params["username"]
@@ -626,9 +580,14 @@ func PublishTrip(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&newTrip)
 	if err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
+		panic(err.Error())
 	}
-
+	parsedTime, err := time.Parse(time.RFC3339, newTrip.StartTravelTime)
+	if err != nil {
+		http.Error(w, "Invalid time format", http.StatusBadRequest)
+		panic(err.Error())
+	}
+	newTrip.StartTravelTime = parsedTime.Format("15:04:05")
 	// Set the Publisher field
 	newTrip.Publisher = username
 
@@ -645,14 +604,14 @@ func PublishTrip(w http.ResponseWriter, r *http.Request) {
 	result, err := db.Exec(query, newTrip.PickUpLocation, nullOrValue(newTrip.AltPickUpLocation), newTrip.StartTravelTime, newTrip.DestinationLocation, newTrip.NoPassengers, newTrip.Publisher)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		panic(err.Error())
 	}
 
 	// Get the auto-incremented ID
 	newID, err := result.LastInsertId()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		panic(err.Error())
 	}
 
 	// Update the response with the new ID

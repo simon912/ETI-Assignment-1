@@ -1,4 +1,4 @@
-// home.go - the page that the user is redirected to from index.go
+// carowner_home.go - the page that the user is redirected to from index.go if their user group is car owner
 package carowner_home
 
 import (
@@ -116,8 +116,9 @@ const carownerTemplate = `
 				// Display an error message or handle the error appropriately
 				showMessage('Failed to retrieve user data.');
 			});
-			const updateUserContainer = document.getElementById('updateUserContainer');
-			updateUserContainer.style.display = 'block';
+			document.getElementById('updateUserForm').style.display = 'block';
+			document.getElementById('confirmDeleteContainer').style.display = 'none';
+			document.getElementById('updateUserContainer').style.display = 'block';
             document.getElementById('updateUserForm').style.display = 'block';
 		}
 		function updateUserInfo(username) {
@@ -148,6 +149,7 @@ const carownerTemplate = `
             });
         }
 		function showDeleteConfirmation() {
+			document.getElementById('updateUserContainer').style.display = 'none';
 			document.getElementById('confirmDeleteContainer').style.display = 'block';
 		}
 		function deleteUser(username) {
@@ -219,7 +221,7 @@ const carownerTemplate = `
     		trips.forEach(trip => {
         		const tripDiv = document.createElement('div');
         		const listItem = document.createElement('p');
-
+				
 				const alternatePickUpLocation = trip['Alternate Pick-Up Location'] ? trip['Alternate Pick-Up Location']['String'] : '';
 				const startTravelingTime = new Date(trip['Start Traveling Time']);
 				const formattedStartTime = startTravelingTime.toLocaleTimeString();
@@ -239,6 +241,46 @@ const carownerTemplate = `
 			document.getElementById('viewProfileContainer').style.display = 'none';
 			document.getElementById('viewTripContainer').style.display = 'none';
 		}
+
+		function publishTrip() {
+			const pickUpLocation = document.getElementById('pickUpLocation').value;
+			const altPickUpLocation = document.getElementById('altPickUpLocation').value;
+			const timeValue = document.getElementById('startTravelTime').value;
+
+    		// Format the time in ISO 8601 format with a fixed date
+    		const startTravelTime = new Date('2000-01-01T' + timeValue + ':00Z');
+			const destinationLocation = document.getElementById('destinationLocation').value;
+			const passengerNo = parseInt(document.getElementById('passengerNo').value);
+			const requestBody = {
+				"Pick-Up Location": pickUpLocation,
+				"Alternate Pick-Up Location": altPickUpLocation,
+				"Start Traveling Time": startTravelTime.toISOString(),
+				"Destination Location": destinationLocation,
+				"Number of Passengers Allowed": passengerNo
+			};
+			fetch('http://localhost:5000/api/v1/publishtrip/' + username, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify(requestBody),
+			})
+			.then(response => {
+				if (!response.ok) {
+					throw new Error('HTTP error! Status: ' + response.status);
+				}
+				return response.text();
+			})
+			.then(data => {
+				// Handle the successful response
+			})
+			.catch(error => {
+				console.error('Fetch error:', error);
+				// Handle the error
+				alert('Error publishing trip: ' + error.message);
+			});
+		}
+		
 	</script>
 </head>
 <body>
@@ -284,7 +326,7 @@ const carownerTemplate = `
 				<input type="text" id="destinationLocation" required><br>
 				<label for="passengerNo">Maximum Number of Passengers:</label>
 				<input type="text" id="passengerNo" required><br>
-				<button type="button" onclick="updateUserInfo(username)">Publish</button>
+				<button type="button" onclick="publishTrip()">Publish</button>
 			</form>
 		</div>
     <div id="message"></div>

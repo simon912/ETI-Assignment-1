@@ -20,7 +20,7 @@ const carownerTemplate = `
     #message {
         display: none;
     }
-	#updateUserContainer, #changeCarOwnerContainer, #viewProfileContainer, #viewTripContainer {
+	#updateUserContainer, #viewProfileContainer, #viewTripContainer, #publishContainer {
 		display: none;
 	}
 </style>
@@ -43,6 +43,7 @@ const carownerTemplate = `
 			document.getElementById('viewProfileContainer').style.display = 'block';
 			document.getElementById('viewTripContainer').style.display = 'none';
 			document.getElementById('confirmDeleteContainer').style.display = 'none';
+			document.getElementById('publishContainer').style.display = 'none';
 		}
 		function logOutUser() {
 			window.location.href = 'http://localhost:5001/';
@@ -116,20 +117,8 @@ const carownerTemplate = `
 				showMessage('Failed to retrieve user data.');
 			});
 			const updateUserContainer = document.getElementById('updateUserContainer');
-			const changeCarOwnerContainer = document.getElementById('changeCarOwnerContainer');
 			updateUserContainer.style.display = 'block';
-			changeCarOwnerContainer.style.display = 'none';
             document.getElementById('updateUserForm').style.display = 'block';
-		}
-		function showChangeCarOwner() {
-			const updateUserContainer = document.getElementById('updateUserContainer');
-			const changeCarOwnerContainer = document.getElementById('changeCarOwnerContainer');
-			updateUserContainer.style.display = 'none';
-			changeCarOwnerContainer.style.display = 'block';
-
-			document.getElementById('carownerLicenseNo').value = '';
-			document.getElementById('carownerCarPlateNo').value = '';
-            document.getElementById('changeCarOwnerForm').style.display = 'block';
 		}
 		function updateUserInfo(username) {
             const mobilenumber = parseInt(document.getElementById('updateMobileNo').value);
@@ -150,32 +139,6 @@ const carownerTemplate = `
                     document.getElementById('updateUserForm').style.display = 'none';
                     document.getElementById('message').style.display = 'block';
                     document.getElementById('message').textContent = "User " + username + "'s info updated successfully";
-                } else {
-                    throw new Error('User update failed');
-                }
-            })
-            .catch(error => {
-                console.error('Error updating user:', error.message);
-            });
-        }
-		function changeCarOwner(username) {
-            const licenseno = parseInt(document.getElementById('carownerLicenseNo').value);
-            const plateno = document.getElementById('carownerCarPlateNo').value;
-            fetch('http://localhost:5000/api/v1/changecarowner/' + username, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    "License Number": licenseno,
-                    "Plate Number": plateno,
-                }),
-            })
-            .then(response => {
-                if (response.ok) {
-                    document.getElementById('changeCarOwnerForm').style.display = 'none';
-                    document.getElementById('message').style.display = 'block';
-                    document.getElementById('message').textContent = "User " + username + " changed to Car Owner";
                 } else {
                     throw new Error('User update failed');
                 }
@@ -216,6 +179,7 @@ const carownerTemplate = `
     		document.getElementById('viewProfileContainer').style.display = 'none';
     		document.getElementById('viewTripContainer').style.display = 'block';
     		document.getElementById('message').style.display = 'none';
+			document.getElementById('publishContainer').style.display = 'none';
 		}
 		function getAllTrips() {
 			var xhr = new XMLHttpRequest();
@@ -267,21 +231,13 @@ const carownerTemplate = `
 							 "Vacancies: " + trip['Number of Passengers Allowed'] + "<br>" +
                              "Published By: " + trip['Publisher'];
         		tripDiv.appendChild(listItem);
-				// Button for Viewing the Detail
-        		const enrollButton = document.createElement('button');
-        		enrollButton.type = 'button';
-        		enrollButton.textContent = 'Enroll into Trip ID ' + trip.ID;
-        		enrollButton.onclick = function() {
-            		
-        		};
-				const buttonDiv = document.createElement('div');
-        		buttonDiv.appendChild(enrollButton);
-				tripDiv.appendChild(buttonDiv);
         		tripList.appendChild(tripDiv);
     		});
 		}
-		function enrollTrip() {
-
+		function showPublishContainer() {
+			document.getElementById('publishContainer').style.display = 'block';
+			document.getElementById('viewProfileContainer').style.display = 'none';
+			document.getElementById('viewTripContainer').style.display = 'none';
 		}
 	</script>
 </head>
@@ -289,21 +245,12 @@ const carownerTemplate = `
 	<div id="userButtonList">
 	<button type="button" onclick="showProfileContainer()">View Profile</button>
 	<button type="button" onclick="showTripsContainer()">View Trips</button>
+	<button type="button" onclick="showPublishContainer()">Publish Trip</button>
 	<a href="/logout"><button type="button">Log Out</button></a>
 	</div>
 	<div id="viewProfileContainer">
-		<button type="button" onclick="showChangeCarOwner()">Change to Car Owner</button>
 		<button type="button" onclick="showUserInfo()">Update Profile</button>
 		<button type="button" onclick="showDeleteConfirmation()">Delete Profile</button>
-		<div id="changeCarOwnerContainer">
-			<form id="changeCarOwnerForm">
-				<label for="carownerLicenseNo">Your Driver's License Number:</label>
-				<input type="text" id="carownerLicenseNo" required><br>
-				<label for="carownerCarPlateNo">Your Car Plate Number:</label>
-				<input type="text" id="carownerCarPlateNo" required><br>
-				<button type="button" onclick="changeCarOwner(username)">Change to Car Owner</button>
-			</form>
-		</div>
 		<div id="confirmDeleteContainer">
 			<span>Are you sure you want to delete your user?</span>
 			<div>
@@ -325,6 +272,21 @@ const carownerTemplate = `
 	<div id="viewTripContainer">
 		<ul id="tripList"></ul>
 	</div>
+	<div id="publishContainer">
+			<form id="publishTripForm">
+				<label for="pickUpLocation">Pick-Up Location:</label>
+				<input type="text" id="pickUpLocation" required><br>
+				<label for="altPickUpLocation">Alternate Pick-Up Location:</label>
+				<input type="text" id="altPickUpLocation" required><br>
+				<label for="startTravelTime">Start Traveling Time:</label>
+				<input type="time" id="startTravelTime" required><br>
+				<label for="destinationLocation">Destination Location:</label>
+				<input type="text" id="destinationLocation" required><br>
+				<label for="passengerNo">Maximum Number of Passengers:</label>
+				<input type="text" id="passengerNo" required><br>
+				<button type="button" onclick="updateUserInfo(username)">Publish</button>
+			</form>
+		</div>
     <div id="message"></div>
 </body>
 </html>

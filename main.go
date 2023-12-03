@@ -65,9 +65,11 @@ func main() {
 	// For Deletion of User, which is called properly if its over 1 year old/365 days old
 	router.HandleFunc("/api/v1/delete/{username}", DeleteUser).Methods("DELETE")
 	// Endpoint for Car-Pooling Trips
+	// To retrieve all trips for Passenger to View
 	router.HandleFunc("/api/v1/trips", GetAllTrip).Methods("GET")
-	router.HandleFunc("/api/v1/trips/{tripid}", GetTrip).Methods("GET")
-	//router.HandleFunc("/api/v1/carpoolingtrip/{tripid}", PublishTrip).Methods("POST")
+	// For Car Owner to publish trip
+	router.HandleFunc("/api/v1/publishtrip/{username}", PublishTrip).Methods("POST")
+	// For Passenger to enroll themselves into any trip
 	router.HandleFunc("/api/v1/enroll/{tripid}/{username}", EnrollUser).Methods("PUT")
 	fmt.Println("Listening at port 5000")
 	log.Fatal(http.ListenAndServe(":5000", handler))
@@ -608,34 +610,55 @@ func updateTrip(tripID int, username string, trip Trips) {
 
 /*
 // for Car Owner only
-// curl http://localhost:5000/api/v1/carpoolingtrip/3 -X POST -d "{\"Pick-Up Location\":\"Choa Chu Kang Road\", \"Alternate Pick-Up Location\":\"\", \"Start Traveling Time\":\"2023-11-13T10:30:00Z\", \"Destination Location\":\"Bukit Timah Road\", \"Number of Passengers Allowed\":4, \"Published By\":\"jane456\"}"
+// curl http://localhost:5000/api/v1/publishtrip/jane456 -X POST -d "{\"Pick-Up Location\":\"Choa Chu Kang Road\", \"Alternate Pick-Up Location\":\"\", \"Start Traveling Time\":\"2023-11-13T10:30:00Z\", \"Destination Location\":\"Bukit Timah Road\", \"Number of Passengers Allowed\":3}"
+*/
 func PublishTrip(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	tripid := params["tripid"]
+	username := params["username"]
 
-	//convert tripid to int
-	tripidInt, err := strconv.Atoi(tripid)
+	if !userExists(username) {
+		http.Error(w, "User not found", http.StatusNotFound)
+		return
+	}
+
+	// Decode the JSON request into a new trip
+	var newTrip Trips
+	err := json.NewDecoder(r.Body).Decode(&newTrip)
 	if err != nil {
-		http.Error(w, "Invalid trip ID", http.StatusBadRequest)
-		return
-	}
-	_, found := carPoolingTrip[tripidInt]
-	if found {
-		http.Error(w, "This car pooling trip already exist", http.StatusConflict)
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	var newTrip carPoolingTripAttr
-	err = json.NewDecoder(r.Body).Decode(&newTrip)
+	// Set the Publisher field
+	newTrip.Publisher = username
+
+	// Insert the new trip into the Trips table
+	db, err := sql.Open("mysql", "user:password@tcp(127.0.0.1:3306)/carpoolingtrip")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	// Insert the new trip and auto-increment the ID
+	query := "INSERT INTO Trips (PickUpLocation, AltPickUpLocation, StartTravelTime, DestinationLocation, PassengerNo, Publisher) VALUES (?, ?, ?, ?, ?, ?)"
+	result, err := db.Exec(query, newTrip.PickUpLocation, nullOrValue(newTrip.AltPickUpLocation), newTrip.StartTravelTime, newTrip.DestinationLocation, newTrip.NoPassengers, newTrip.Publisher)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	carPoolingTrip[tripidInt] = carPoolingTripAttr(newTrip)
+	// Get the auto-incremented ID
+	newID, err := result.LastInsertId()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-	// status code 201 - Created
-	w.WriteHeader(http.StatusAccepted)
-	fmt.Fprintf(w, "Your car publishing trip ID %s has been registered!\n", tripid)
+	// Update the response with the new ID
+	newTrip.ID = int(newID)
+
+	// Return success response with the new trip
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(newTrip)
 }
-*/

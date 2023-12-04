@@ -237,21 +237,27 @@ const carownerTemplate = `
 				tripDiv.appendChild(listItem);
 				
 				// Conditionally add the "Start Trip" button & "Cancel Trip" button
-        		if (trip['Publisher'] === username && trip['Status'] === 'Pending') {
-            		const startTripButton = document.createElement('button');
-            		startTripButton.type = 'button';
-            		startTripButton.textContent = 'Start Trip';
-            		startTripButton.onclick = function() {
-                	startTrip(trip.ID);
-            		};
-            		const cancelTripButton = document.createElement('button');
-            		cancelTripButton.type = 'button';
-            		cancelTripButton.textContent = 'Cancel Trip';
-            		cancelTripButton.onclick = function() {
-                	startTrip(trip.ID);
-            		};
-            	tripDiv.appendChild(startTripButton);
-				tripDiv.appendChild(cancelTripButton);
+        		if (trip['Publisher'] === username) {
+					const startTripButton = document.createElement('button');
+					startTripButton.type = 'button';
+					startTripButton.textContent = 'Start Trip';
+					startTripButton.onclick = function () {
+						startTrip(trip.ID);
+					};
+				
+					// Only add the "Start Trip" button if the status is 'Pending'
+					if (trip['Status'] === 'Pending') {
+						tripDiv.appendChild(startTripButton);
+					}
+				
+					const cancelTripButton = document.createElement('button');
+					cancelTripButton.type = 'button';
+					cancelTripButton.textContent = 'Cancel Trip';
+					cancelTripButton.onclick = function () {
+						startTrip(trip.ID);
+					};
+				
+					tripDiv.appendChild(cancelTripButton);
         		}
         		tripList.appendChild(tripDiv);
     		});
@@ -302,7 +308,7 @@ const carownerTemplate = `
 			});
 		}
 		function startTrip(tripID) {
-            fetch('http://localhost:5000/api/v1/starttrip/' + tripID + '/' + username, {
+            fetch('http://localhost:5000/api/v1/starttrip/' + tripID, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

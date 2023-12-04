@@ -631,12 +631,18 @@ func StartTrip(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	tripID := params["tripid"]
 
-	var startTrip Trips
-	fmt.Println("Received JSON:", r.Body)
-
-	err := json.NewDecoder(r.Body).Decode(&startTrip)
+	db, err := sql.Open("mysql", "user:password@tcp(127.0.0.1:3306)/carpoolingtrip")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	var startTrip Trips
+	query := "SELECT MaxPassengerNo, PassengerNoLeft FROM Trips WHERE ID = ?"
+	err = db.QueryRow(query, tripID).Scan(&startTrip.MaxPassengerNo, &startTrip.PassengerNoLeft)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -646,13 +652,6 @@ func StartTrip(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db, err := sql.Open("mysql", "user:password@tcp(127.0.0.1:3306)/carpoolingtrip")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer db.Close()
-
 	tx, err := db.Begin()
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -660,7 +659,7 @@ func StartTrip(w http.ResponseWriter, r *http.Request) {
 	}
 	defer tx.Rollback()
 
-	query := "UPDATE Trips SET Status=? WHERE ID = ?"
+	query = "UPDATE Trips SET Status=? WHERE ID = ?"
 	_, err = db.Exec(query, "Active", tripID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

@@ -218,6 +218,7 @@ const carownerTemplate = `
 		function updateTripList(trips) {
 			const tripList = document.getElementById('tripList');
 			tripList.innerHTML = '';
+
     		trips.forEach(trip => {
         		const tripDiv = document.createElement('div');
         		const listItem = document.createElement('p');
@@ -231,8 +232,27 @@ const carownerTemplate = `
                              "Start Traveling Time: " +  formattedStartTime + "<br>" +
                              "Destination Location: " + trip['Destination Location'] + "<br>" +
 							 "Vacancies: " + trip['Number of Passengers Allowed'] + "<br>" +
+							 "Status: " + trip['Status'] + "<br>" +
                              "Published By: " + trip['Publisher'];
-        		tripDiv.appendChild(listItem);
+				tripDiv.appendChild(listItem);
+
+				// Conditionally add the "Start Trip" button & "Cancel Trip" button
+        		if (trip['Publisher'] === username) {
+            		const startTripButton = document.createElement('button');
+            		startTripButton.type = 'button';
+            		startTripButton.textContent = 'Start Trip';
+            		startTripButton.onclick = function() {
+                	startTrip(trip.ID);
+            		};
+            		const cancelTripButton = document.createElement('button');
+            		cancelTripButton.type = 'button';
+            		cancelTripButton.textContent = 'Cancel Trip';
+            		cancelTripButton.onclick = function() {
+                	startTrip(trip.ID);
+            		};
+            	tripDiv.appendChild(startTripButton);
+				tripDiv.appendChild(cancelTripButton);
+        		}
         		tripList.appendChild(tripDiv);
     		});
 		}

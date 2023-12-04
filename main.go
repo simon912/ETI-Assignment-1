@@ -39,6 +39,7 @@ type Trips struct {
 	Passenger1          sql.NullString `json:"Passenger 1"`
 	Passenger2          sql.NullString `json:"Passenger 2"`
 	Passenger3          sql.NullString `json:"Passenger 3"`
+	Status              string         `json:"Status"` // pending or active
 	Publisher           string         `json:"Publisher"`
 }
 
@@ -69,6 +70,8 @@ func main() {
 	router.HandleFunc("/api/v1/trips", GetAllTrip).Methods("GET")
 	// For Car Owner to publish trip
 	router.HandleFunc("/api/v1/publishtrip/{username}", PublishTrip).Methods("POST")
+	// For Car Owner to start trip
+	router.HandleFunc("/api/v1/starttrip/{tripid}/{username}", StartTrip).Methods("PUT")
 	// For Passenger to enroll themselves into any trip
 	router.HandleFunc("/api/v1/enroll/{tripid}/{username}", EnrollUser).Methods("PUT")
 	fmt.Println("Listening at port 5000")
@@ -406,7 +409,7 @@ func GetAllTrip(w http.ResponseWriter, r *http.Request) {
 	for results.Next() {
 		var t Trips
 		var startTravelTimeStr string
-		err = results.Scan(&t.ID, &t.PickUpLocation, &t.AltPickUpLocation, &startTravelTimeStr, &t.DestinationLocation, &t.NoPassengers, &t.Passenger1, &t.Passenger2, &t.Passenger3, &t.Publisher)
+		err = results.Scan(&t.ID, &t.PickUpLocation, &t.AltPickUpLocation, &startTravelTimeStr, &t.DestinationLocation, &t.NoPassengers, &t.Passenger1, &t.Passenger2, &t.Passenger3, &t.Status, &t.Publisher)
 		if err != nil {
 			panic(err.Error())
 		}
@@ -479,7 +482,7 @@ func getTripByID(tripID int) (Trips, bool) {
 	var startTravelTimeStr string
 	err = db.QueryRow(query, tripID).Scan(
 		&t.ID, &t.PickUpLocation, &t.AltPickUpLocation, &startTravelTimeStr, &t.DestinationLocation,
-		&t.NoPassengers, &t.Passenger1, &t.Passenger2, &t.Passenger3, &t.Publisher,
+		&t.NoPassengers, &t.Passenger1, &t.Passenger2, &t.Passenger3, &t.Status, &t.Publisher,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -600,8 +603,8 @@ func PublishTrip(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	// Insert the new trip and auto-increment the ID
-	query := "INSERT INTO Trips (PickUpLocation, AltPickUpLocation, StartTravelTime, DestinationLocation, PassengerNo, Publisher) VALUES (?, ?, ?, ?, ?, ?)"
-	result, err := db.Exec(query, newTrip.PickUpLocation, nullOrValue(newTrip.AltPickUpLocation), newTrip.StartTravelTime, newTrip.DestinationLocation, newTrip.NoPassengers, newTrip.Publisher)
+	query := "INSERT INTO Trips (PickUpLocation, AltPickUpLocation, StartTravelTime, DestinationLocation, PassengerNo, Status, Publisher) VALUES (?, ?, ?, ?, ?, ?, ?)"
+	result, err := db.Exec(query, newTrip.PickUpLocation, nullOrValue(newTrip.AltPickUpLocation), newTrip.StartTravelTime, newTrip.DestinationLocation, newTrip.NoPassengers, "Pending", newTrip.Publisher)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		panic(err.Error())
@@ -620,4 +623,48 @@ func PublishTrip(w http.ResponseWriter, r *http.Request) {
 	// Return success response with the new trip
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(newTrip)
+}
+
+func StartTrip(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	tripID := params["tripid"]
+	username := params["username"]
+	var startTrip Trips
+	fmt.Println("Received JSON:", r.Body)
+	err := json.NewDecoder(r.Body).Decode(&startTrip)
+	if err != nil {
+		panic(err.Error())
+	}
+	// Check if Passenger1 is filled, indicating if there's enrollment in trip
+	if !startTrip.Passenger1.Valid || startTrip.Passenger1.String == "" {
+		http.Error(w, "At least one Passenger needs to enroll!", http.StatusBadRequest)
+		return
+	}
+	db, err := sql.Open("mysql", "user:password@tcp(127.0.0.1:3306)/carpoolingtrip")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	tx, err := db.Begin()
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	defer tx.Rollback()
+
+	query := "UPDATE TRIP SET Status=? WHERE ID =? AND Publisher=?"
+	_, err = db.Exec(query, "Active", tripID, username)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	err = tx.Commit()
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusAccepted)
+	fmt.Fprintf(w, "Trip %s Status has been changed to Active\n", tripID)
 }

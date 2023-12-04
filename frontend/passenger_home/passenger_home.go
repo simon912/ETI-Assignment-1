@@ -268,6 +268,7 @@ const passengerTemplate = `
                              "Start Traveling Time: " +  formattedStartTime + "<br>" +
                              "Destination Location: " + trip['Destination Location'] + "<br>" +
 							 "Vacancies: " + trip['Number of Passengers Allowed'] + "<br>" +
+							 "Status: " + trip['Status'] + "<br>" +
                              "Published By: " + trip['Publisher'];
         		tripDiv.appendChild(listItem);
 				// Button for Viewing the Detail

@@ -231,13 +231,13 @@ const carownerTemplate = `
                              "Alternate Pick-Up Location: " + alternatePickUpLocation + "<br>" +
                              "Start Traveling Time: " +  formattedStartTime + "<br>" +
                              "Destination Location: " + trip['Destination Location'] + "<br>" +
-							 "Vacancies: " + trip['Number of Passengers Allowed'] + "<br>" +
+							 "Vacancies: " + trip['Number of Passengers Left'] + "/" + trip['Maximum Number of Passengers'] +"<br>" +
 							 "Status: " + trip['Status'] + "<br>" +
                              "Published By: " + trip['Publisher'];
 				tripDiv.appendChild(listItem);
-
+				
 				// Conditionally add the "Start Trip" button & "Cancel Trip" button
-        		if (trip['Publisher'] === username) {
+        		if (trip['Publisher'] === username && trip['Status'] === 'Pending') {
             		const startTripButton = document.createElement('button');
             		startTripButton.type = 'button';
             		startTripButton.textContent = 'Start Trip';
@@ -276,7 +276,8 @@ const carownerTemplate = `
 				"Alternate Pick-Up Location": altPickUpLocation,
 				"Start Traveling Time": startTravelTime.toISOString(),
 				"Destination Location": destinationLocation,
-				"Number of Passengers Allowed": passengerNo
+				"Number of Passengers Left": passengerNo,
+				"Maximum Number of Passengers": passengerNo,
 			};
 			fetch('http://localhost:5000/api/v1/publishtrip/' + username, {
 				method: 'POST',
@@ -300,7 +301,30 @@ const carownerTemplate = `
 				alert('Error publishing trip: ' + error.message);
 			});
 		}
-		
+		function startTrip(tripID) {
+            fetch('http://localhost:5000/api/v1/starttrip/' + tripID + '/' + username, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    "ID": tripID,
+                    "Publisher": username,
+                }),
+            })
+            .then(response => {
+                if (response.ok) {
+                    document.getElementById('updateUserForm').style.display = 'none';
+                    document.getElementById('message').style.display = 'block';
+                    document.getElementById('message').textContent = "Trip " + tripID + "'s status updated successfully";
+                } else {
+                    throw new Error('Trip status update failed');
+                }
+            })
+            .catch(error => {
+                console.error('Error updating trip status:', error.message);
+            });
+		}
 	</script>
 </head>
 <body>

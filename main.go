@@ -35,7 +35,8 @@ type Trips struct {
 	AltPickUpLocation   sql.NullString `json:"Alternate Pick-Up Location"`
 	StartTravelTime     string         `json:"Start Traveling Time"`
 	DestinationLocation string         `json:"Destination Location"`
-	NoPassengers        int            `json:"Number of Passengers Allowed"`
+	PassengerNoLeft     int            `json:"Number of Passengers Left"`
+	MaxPassengerNo      int            `json:"Maximum Number of Passengers"`
 	Passenger1          sql.NullString `json:"Passenger 1"`
 	Passenger2          sql.NullString `json:"Passenger 2"`
 	Passenger3          sql.NullString `json:"Passenger 3"`
@@ -71,7 +72,8 @@ func main() {
 	// For Car Owner to publish trip
 	router.HandleFunc("/api/v1/publishtrip/{username}", PublishTrip).Methods("POST")
 	// For Car Owner to start trip
-	router.HandleFunc("/api/v1/starttrip/{tripid}/{username}", StartTrip).Methods("PUT")
+	// curl http://localhost:5000/api/v1/starttrip/3 -X PUT -d "{\"Number of Passengers Left\": 1, \"Maximum Number of Passengers\": 2}"
+	router.HandleFunc("/api/v1/starttrip/{tripid}", StartTrip).Methods("PUT")
 	// For Passenger to enroll themselves into any trip
 	router.HandleFunc("/api/v1/enroll/{tripid}/{username}", EnrollUser).Methods("PUT")
 	fmt.Println("Listening at port 5000")
@@ -409,7 +411,7 @@ func GetAllTrip(w http.ResponseWriter, r *http.Request) {
 	for results.Next() {
 		var t Trips
 		var startTravelTimeStr string
-		err = results.Scan(&t.ID, &t.PickUpLocation, &t.AltPickUpLocation, &startTravelTimeStr, &t.DestinationLocation, &t.NoPassengers, &t.Passenger1, &t.Passenger2, &t.Passenger3, &t.Status, &t.Publisher)
+		err = results.Scan(&t.ID, &t.PickUpLocation, &t.AltPickUpLocation, &startTravelTimeStr, &t.DestinationLocation, &t.PassengerNoLeft, &t.MaxPassengerNo, &t.Passenger1, &t.Passenger2, &t.Passenger3, &t.Status, &t.Publisher)
 		if err != nil {
 			panic(err.Error())
 		}
@@ -447,7 +449,7 @@ func EnrollUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if the trip is full
-	if trip.NoPassengers <= 0 {
+	if trip.PassengerNoLeft <= 0 {
 		http.Error(w, "Trip is already full", http.StatusBadRequest)
 		return
 	}
@@ -482,7 +484,7 @@ func getTripByID(tripID int) (Trips, bool) {
 	var startTravelTimeStr string
 	err = db.QueryRow(query, tripID).Scan(
 		&t.ID, &t.PickUpLocation, &t.AltPickUpLocation, &startTravelTimeStr, &t.DestinationLocation,
-		&t.NoPassengers, &t.Passenger1, &t.Passenger2, &t.Passenger3, &t.Status, &t.Publisher,
+		&t.PassengerNoLeft, &t.MaxPassengerNo, &t.Passenger1, &t.Passenger2, &t.Passenger3, &t.Status, &t.Publisher,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -535,8 +537,8 @@ func updateTrip(tripID int, username string, trip Trips) {
 	}
 
 	// Update the trip with the new passenger
-	query := fmt.Sprintf("UPDATE Trips SET %s=?, PassengerNo=? WHERE ID=?", passengerField)
-	_, err = db.Exec(query, username, trip.NoPassengers-1, tripID)
+	query := fmt.Sprintf("UPDATE Trips SET %s=?, PassengerNoLeft=? WHERE ID=?", passengerField)
+	_, err = db.Exec(query, username, trip.PassengerNoLeft-1, tripID)
 	if err != nil {
 		// Handle error
 		fmt.Printf("Error updating trip: %v\n", err)
@@ -603,8 +605,8 @@ func PublishTrip(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	// Insert the new trip and auto-increment the ID
-	query := "INSERT INTO Trips (PickUpLocation, AltPickUpLocation, StartTravelTime, DestinationLocation, PassengerNo, Status, Publisher) VALUES (?, ?, ?, ?, ?, ?, ?)"
-	result, err := db.Exec(query, newTrip.PickUpLocation, nullOrValue(newTrip.AltPickUpLocation), newTrip.StartTravelTime, newTrip.DestinationLocation, newTrip.NoPassengers, "Pending", newTrip.Publisher)
+	query := "INSERT INTO Trips (PickUpLocation, AltPickUpLocation, StartTravelTime, DestinationLocation, PassengerNoLeft, MaxPassengerNo, Status, Publisher) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+	result, err := db.Exec(query, newTrip.PickUpLocation, nullOrValue(newTrip.AltPickUpLocation), newTrip.StartTravelTime, newTrip.DestinationLocation, newTrip.PassengerNoLeft, newTrip.MaxPassengerNo, "Pending", newTrip.Publisher)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		panic(err.Error())
@@ -628,18 +630,22 @@ func PublishTrip(w http.ResponseWriter, r *http.Request) {
 func StartTrip(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	tripID := params["tripid"]
-	username := params["username"]
+
 	var startTrip Trips
 	fmt.Println("Received JSON:", r.Body)
+
 	err := json.NewDecoder(r.Body).Decode(&startTrip)
 	if err != nil {
-		panic(err.Error())
-	}
-	// Check if Passenger1 is filled, indicating if there's enrollment in trip
-	if !startTrip.Passenger1.Valid || startTrip.Passenger1.String == "" {
-		http.Error(w, "At least one Passenger needs to enroll!", http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	// Check if PassengerNoLeft is equal to MaxPassengerNo
+	if startTrip.MaxPassengerNo == startTrip.PassengerNoLeft {
+		http.Error(w, "Trip cannot start if no one is enrolled into your trip", http.StatusBadRequest)
+		return
+	}
+
 	db, err := sql.Open("mysql", "user:password@tcp(127.0.0.1:3306)/carpoolingtrip")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -654,17 +660,19 @@ func StartTrip(w http.ResponseWriter, r *http.Request) {
 	}
 	defer tx.Rollback()
 
-	query := "UPDATE TRIP SET Status=? WHERE ID =? AND Publisher=?"
-	_, err = db.Exec(query, "Active", tripID, username)
+	query := "UPDATE Trips SET Status=? WHERE ID = ?"
+	_, err = db.Exec(query, "Active", tripID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
 	err = tx.Commit()
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
+
 	w.WriteHeader(http.StatusAccepted)
 	fmt.Fprintf(w, "Trip %s Status has been changed to Active\n", tripID)
 }

@@ -267,7 +267,7 @@ const passengerTemplate = `
                              "Alternate Pick-Up Location: " + alternatePickUpLocation + "<br>" +
                              "Start Traveling Time: " +  formattedStartTime + "<br>" +
                              "Destination Location: " + trip['Destination Location'] + "<br>" +
-							 "Vacancies: " + trip['Number of Passengers Allowed'] + "<br>" +
+							 "Vacancies: " + trip['Number of Passengers Left'] + "/" + trip['Maximum Number of Passengers'] +"<br>" +
 							 "Status: " + trip['Status'] + "<br>" +
                              "Published By: " + trip['Publisher'];
         		tripDiv.appendChild(listItem);

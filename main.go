@@ -745,16 +745,13 @@ func CancelTrip(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Adjusted Time Difference:", timeDifference)
 
 	// Check if the trip can be canceled (more than or equal to 30 minutes before the start time)
-	if timeDifference.Minutes() <= 30 {
-		fmt.Println("Cancellation window has not passed. Cannot cancel the trip.")
-		http.Error(w, "Trip cannot be canceled. Cancellation window has not passed", http.StatusBadRequest)
+	if timeDifference.Minutes() >= -30 && timeDifference.Minutes() <= 30 {
+		fmt.Println("Cancellation window is within 30 minutes. Cannot cancel the trip.")
+		http.Error(w, "Trip cannot be canceled. Cancellation window is within 30 minutes", http.StatusBadRequest)
 		return
 	}
-
-	// Continue with the rest of the code for canceling the trip
 	// Delete the trip from the Trips table
 	deleteTrip(w, tripIDInt)
-
 	// Return success response
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "Trip ID %s has been canceled successfully\n", tripID)

@@ -1,8 +1,8 @@
 # ETI Assignment 1
 
 ### How to run the program
-1. Launch main.go
-2. Launch index.go
+1. Run main.go
+2. Launch index.html 
 
 ### Design Considerations/Microservices
 The backend is split into three Microservices that do separate functions. Each Microservice has their own role and responsbility to fulfill while being linked to each other.

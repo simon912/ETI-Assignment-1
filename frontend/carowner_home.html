@@ -36,9 +36,6 @@
 			document.getElementById('confirmDeleteContainer').style.display = 'none';
 			document.getElementById('publishContainer').style.display = 'none';
 		}
-		function logOutUser() {
-			window.location.href = 'http://localhost:5001/';
-		}
 		function retrieveUserData() {
 			// Send a GET request to /api/v1/user/{username} endpoint for user data
 			fetch('http://localhost:5000/api/v1/user/' + username, {
@@ -154,7 +151,7 @@
                 if (response.ok) {
                     document.getElementById('message').style.display = 'block';
                     document.getElementById('message').textContent = 'User ' + username + ' deleted, you will be logged out';
-					window.location.href = 'http://localhost:5001/';
+					window.location.href = 'http://localhost:5000/';
                 } else {
                     throw new Error('User deletion failed. The user needs to be over 1 year old to be deleted.');
                 }
@@ -178,7 +175,7 @@
 		}
 		function getAllTrips() {
 			var xhr = new XMLHttpRequest();
-			xhr.open('GET', 'http://localhost:5000/api/v1/trips', true);
+			xhr.open('GET', 'http://localhost:5001/api/v1/trips', true);
 		
 			xhr.onload = function () {
 				if (xhr.status >= 200 && xhr.status < 300) {
@@ -288,7 +285,7 @@
 				"Maximum Number of Passengers": passengerNo,
 			};
 		
-			fetch('http://localhost:5000/api/v1/publishtrip/' + username, {
+			fetch('http://localhost:5001/api/v1/publishtrip/' + username, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -310,6 +307,26 @@
 				alert('Error publishing trip: ' + error.message);
 			});
 		}
+		function startTrip(tripID) {
+			fetch('http://localhost:5001/api/v1/starttrip/' + tripID, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => {
+                if (response.ok) {
+                    document.getElementById('updateUserForm').style.display = 'none';
+                    document.getElementById('message').style.display = 'block';
+                    showMessage("Trip ID " + tripID + "'s status has been changed to Active.");
+                } else {
+                    throw new Error('Trip update failed');
+                }
+            })
+            .catch(error => {
+                console.error('Error updating Trip:', error.message);
+            });
+		}
 		function confirmCancelTrip(tripID) {
 			document.getElementById('tripIDspan').innerText = tripID;
 			document.getElementById('confirmCancelTripContainer').style.display = 'block';
@@ -317,7 +334,7 @@
 		}
 		function cancelTrip() {
 			const tripID = document.getElementById('tripIDspan').innerText;
-			fetch('http://localhost:5000/api/v1/canceltrip/' + tripID, {
+			fetch('http://localhost:5001/api/v1/canceltrip/' + tripID, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
@@ -344,7 +361,7 @@
 	<button type="button" onclick="showProfileContainer()">View Profile</button>
 	<button type="button" onclick="showTripsContainer()">View Trips</button>
 	<button type="button" onclick="showPublishContainer()">Publish Trip</button>
-	<a href="/logout"><button type="button">Log Out</button></a>
+	<a href="index.html"><button type="button">Log Out</button></a>
 	</div>
 	<div id="viewProfileContainer">
 		<button type="button" onclick="showUserInfo()">Update Profile</button>

@@ -35,9 +35,6 @@
 			document.getElementById('viewTripContainer').style.display = 'none';
 			document.getElementById('confirmDeleteContainer').style.display = 'none';
 		}
-		function logOutUser() {
-			window.location.href = 'http://localhost:5001/';
-		}
 		function retrieveUserData() {
 			// Send a GET request to /api/v1/user/{username} endpoint for user data
 			fetch('http://localhost:5000/api/v1/user/' + username, {
@@ -212,7 +209,7 @@
 		}
 		function getAllTrips() {
 			var xhr = new XMLHttpRequest();
-			xhr.open('GET', 'http://localhost:5000/api/v1/trips', true);
+			xhr.open('GET', 'http://localhost:5001/api/v1/trips', true);
 		
 			xhr.onload = function () {
 				if (xhr.status >= 200 && xhr.status < 300) {
@@ -281,7 +278,7 @@
 		
 		
 		function enrollTrip(tripID, username) {
-			fetch('http://localhost:5000/api/v1/enroll/' + tripID + '/' + username, {
+			fetch('http://localhost:5001/api/v1/enroll/' + tripID + '/' + username, {
 				method: 'PUT',
 				headers: {
 					'Content-Type': 'application/json',

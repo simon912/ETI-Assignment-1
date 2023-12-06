@@ -48,9 +48,12 @@ type Trips struct {
 func main() {
 	router := mux.NewRouter()
 	corsOptions := cors.New(cors.Options{
-		AllowedOrigins: []string{"http://localhost:5001"},
-		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE"},
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
+		AllowedHeaders:   []string{"Content-Type"},
+		AllowCredentials: true,
 	})
+
 	handler := corsOptions.Handler(router)
 
 	// Endpoint for User

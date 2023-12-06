@@ -76,6 +76,8 @@ func main() {
 	router.HandleFunc("/api/v1/starttrip/{tripid}", StartTrip).Methods("PUT")
 	// For Passenger to enroll themselves into any trip
 	router.HandleFunc("/api/v1/enroll/{tripid}/{username}", EnrollUser).Methods("PUT")
+	// For Car Owner to cancel trip, works if they cancel it 30 mins before start travel time
+	router.HandleFunc("/api/v1/canceltrip/{tripid}", CancelTrip).Methods("DELETE")
 	fmt.Println("Listening at port 5000")
 	log.Fatal(http.ListenAndServe(":5000", handler))
 }
@@ -399,32 +401,44 @@ func GetAllTrip(w http.ResponseWriter, r *http.Request) {
 	db, err := sql.Open("mysql", "user:password@tcp(127.0.0.1:3306)/carpoolingtrip")
 	// handle error
 	if err != nil {
-		panic(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 	// database operation
 	defer db.Close()
 	results, err := db.Query("SELECT * FROM Trips")
 	if err != nil {
-		panic(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 	var trips []Trips
 	for results.Next() {
 		var t Trips
-		var startTravelTimeStr string
-		err = results.Scan(&t.ID, &t.PickUpLocation, &t.AltPickUpLocation, &startTravelTimeStr, &t.DestinationLocation, &t.PassengerNoLeft, &t.MaxPassengerNo, &t.Passenger1, &t.Passenger2, &t.Passenger3, &t.Status, &t.Publisher)
+		err = results.Scan(&t.ID, &t.PickUpLocation, &t.AltPickUpLocation, &t.StartTravelTime, &t.DestinationLocation, &t.PassengerNoLeft, &t.MaxPassengerNo, &t.Passenger1, &t.Passenger2, &t.Passenger3, &t.Status, &t.Publisher)
 		if err != nil {
-			panic(err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
-		// Parse the time string and set it in the Trips struct
-		parsedTime, err := time.Parse("15:04:05", startTravelTimeStr)
+
+		// Parse the time string to time.Time
+		parsedTime, err := time.Parse("15:04:05", t.StartTravelTime)
 		if err != nil {
-			// Handle the error, e.g., log it and proceed with a default value
-			fmt.Printf("Error parsing time for Trip ID %d: %v\n", t.ID, err)
-			parsedTime = time.Time{} // Default to zero time
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
-		t.StartTravelTime = parsedTime.Format(time.RFC3339)
+
+		// Convert the time to UTC if necessary (as needed in your application)
+		parsedTime = parsedTime.UTC()
+
+		// Format the time as 12-hour format with AM/PM
+		formattedTime := parsedTime.Format("03:04 PM")
+
+		// Assign the formatted time to StartTravelTime in the Trips struct
+		t.StartTravelTime = formattedTime
+
 		trips = append(trips, t)
 	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(trips)
 }
@@ -587,7 +601,7 @@ func PublishTrip(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		panic(err.Error())
 	}
-	parsedTime, err := time.Parse(time.RFC3339, newTrip.StartTravelTime)
+	parsedTime, err := time.Parse("15:04:05", newTrip.StartTravelTime)
 	if err != nil {
 		http.Error(w, "Invalid time format", http.StatusBadRequest)
 		panic(err.Error())
@@ -605,7 +619,7 @@ func PublishTrip(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	// Insert the new trip and auto-increment the ID
-	query := "INSERT INTO Trips (PickUpLocation, AltPickUpLocation, StartTravelTime, DestinationLocation, PassengerNoLeft, MaxPassengerNo, Status, Publisher) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+	query := "INSERT INTO Trips (PickUpLocation, AltPickUpLocation, StartTravelTime, DestinationLocation, PassengerNoLeft, MaxPassengerNo, Status, Publisher) VALUES (?, ?, STR_TO_DATE(?, '%H:%i:%s'), ?, ?, ?, ?, ?)"
 	result, err := db.Exec(query, newTrip.PickUpLocation, nullOrValue(newTrip.AltPickUpLocation), newTrip.StartTravelTime, newTrip.DestinationLocation, newTrip.PassengerNoLeft, newTrip.MaxPassengerNo, "Pending", newTrip.Publisher)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -674,4 +688,99 @@ func StartTrip(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusAccepted)
 	fmt.Fprintf(w, "Trip %s Status has been changed to Active\n", tripID)
+}
+
+// CancelTrip cancels a trip by deleting the record from the Trips table
+func CancelTrip(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	tripID := params["tripid"]
+	db, err := sql.Open("mysql", "user:password@tcp(127.0.0.1:3306)/carpoolingtrip")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	// Convert tripID to int
+	tripIDInt, err := strconv.Atoi(tripID)
+	if err != nil {
+		http.Error(w, "Invalid trip ID", http.StatusBadRequest)
+		return
+	}
+
+	// Check if the trip exists
+	trip, found := getTripByID(tripIDInt)
+	if !found {
+		http.Error(w, "Trip not found", http.StatusNotFound)
+		return
+	}
+	query := "SELECT StartTravelTime FROM Trips WHERE ID = ?"
+	err = db.QueryRow(query, tripID).Scan(&trip.StartTravelTime)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	// Print Start Travel Time from the database
+	fmt.Println("Start Travel Time from Database:", trip.StartTravelTime)
+
+	// Parse the StartTravelTime from the database
+	dbStartTime, err := time.Parse("15:04:05", trip.StartTravelTime)
+	if err != nil {
+		fmt.Println("Error parsing start time from the database:", err)
+		// Handle the error as needed
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	// Print current time
+	currentTime := time.Now()
+	fmt.Println("Current Time:", currentTime)
+
+	// Calculate the time difference between now and the trip start time from the database
+	timeDifference := time.Until(dbStartTime)
+
+	// Check if the trip can be canceled (30 minutes before the start time)
+	if timeDifference.Minutes() <= 30 {
+		fmt.Println("Cancellation window has passed. Cannot cancel the trip.")
+		http.Error(w, "Trip cannot be canceled. Cancellation window has passed", http.StatusBadRequest)
+		return
+	}
+
+	// Continue with the rest of the code for canceling the trip
+	// Delete the trip from the Trips table
+	deleteTrip(w, tripIDInt)
+
+	// Return success response
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "Trip ID %s has been canceled successfully\n", tripID)
+}
+
+// Helper function to delete a trip from the Trips table
+func deleteTrip(w http.ResponseWriter, tripID int) {
+	db, err := sql.Open("mysql", "user:password@tcp(127.0.0.1:3306)/carpoolingtrip")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	// Delete the trip
+	query := "DELETE FROM Trips WHERE ID = ?"
+	result, err := db.Exec(query, tripID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Check if the trip was found and deleted
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if rowsAffected == 0 {
+		http.Error(w, "Trip not found", http.StatusNotFound)
+		return
+	}
 }

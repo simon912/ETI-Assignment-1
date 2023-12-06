@@ -13,6 +13,7 @@ const passengerTemplate = `
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Car Pooling Trip - Home</title>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment-with-locales.min.js" integrity="sha512-42PE0rd+wZ2hNXftlM78BSehIGzezNeQuzihiBCvUEB3CVxHvsShF86wBWwQORNxNINlBPuq7rG4WWhNiTVHFg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 	<h1>Welcome to the Car Pooling Trip Platform!</h1>
 	<h2>Welcome <span id="usergroupspan"></span> <span id="firstnamespan"></span> <span id="lastnamespan"></span></h2>
 	<style>
@@ -251,40 +252,43 @@ const passengerTemplate = `
 		}
 		
 		function updateTripList(trips) {
-			// Sorting in reverse chronological order
-			trips.sort((a, b) => new Date(b['Start Traveling Time']) - new Date(a['Start Traveling Time']));
 			const tripList = document.getElementById('tripList');
 			tripList.innerHTML = '';
-    		trips.forEach(trip => {
-        		const tripDiv = document.createElement('div');
-        		const listItem = document.createElement('p');
-
+			trips.forEach(trip => {
+				const tripDiv = document.createElement('div');
+				const listItem = document.createElement('p');
+		
 				const alternatePickUpLocation = trip['Alternate Pick-Up Location'] ? trip['Alternate Pick-Up Location']['String'] : '';
-				const startTravelingTime = new Date(trip['Start Traveling Time']);
-				const formattedStartTime = startTravelingTime.toLocaleTimeString();
-        		listItem.innerHTML = "ID: " + trip.ID + "<br>" +
-                             "Pick-Up Location: " + trip['Pick-Up Location'] + "<br>" +
-                             "Alternate Pick-Up Location: " + alternatePickUpLocation + "<br>" +
-                             "Start Traveling Time: " +  formattedStartTime + "<br>" +
-                             "Destination Location: " + trip['Destination Location'] + "<br>" +
-							 "Vacancies: " + trip['Number of Passengers Left'] + "/" + trip['Maximum Number of Passengers'] +"<br>" +
-							 "Status: " + trip['Status'] + "<br>" +
-                             "Published By: " + trip['Publisher'];
-        		tripDiv.appendChild(listItem);
+
+        		const startTravelingTime = moment(trip['Start Traveling Time'], 'hh:mm A');
+				const formattedStartTime = startTravelingTime.format('h:mm A');
+
+				listItem.innerHTML = "ID: " + trip.ID + "<br>" +
+					"Pick-Up Location: " + trip['Pick-Up Location'] + "<br>" +
+					"Alternate Pick-Up Location: " + alternatePickUpLocation + "<br>" +
+					"Start Traveling Time: " + formattedStartTime + "<br>" +
+					"Destination Location: " + trip['Destination Location'] + "<br>" +
+					"Vacancies: " + trip['Number of Passengers Left'] + "/" + trip['Maximum Number of Passengers'] + "<br>" +
+					"Status: " + trip['Status'] + "<br>" +
+					"Published By: " + trip['Publisher'];
+				tripDiv.appendChild(listItem);
+		
 				// Button for Viewing the Detail
-        		const enrollButton = document.createElement('button');
-        		enrollButton.type = 'button';
-        		enrollButton.textContent = 'Enroll into Trip ID ' + trip.ID;
-        		enrollButton.onclick = function() {
+				const enrollButton = document.createElement('button');
+				enrollButton.type = 'button';
+				enrollButton.textContent = 'Enroll into Trip ID ' + trip.ID;
+				enrollButton.onclick = function () {
 					const tripID = trip.ID;
-    				enrollTrip(tripID, username);
-        		};
+					enrollTrip(tripID, username);
+				};
 				const buttonDiv = document.createElement('div');
-        		buttonDiv.appendChild(enrollButton);
+				buttonDiv.appendChild(enrollButton);
 				tripDiv.appendChild(buttonDiv);
-        		tripList.appendChild(tripDiv);
-    		});
+				tripList.appendChild(tripDiv);
+			});
 		}
+		
+		
 		function enrollTrip(tripID, username) {
 			fetch('http://localhost:5000/api/v1/enroll/' + tripID + '/' + username, {
 				method: 'PUT',

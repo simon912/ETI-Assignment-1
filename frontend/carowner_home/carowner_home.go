@@ -13,6 +13,7 @@ const carownerTemplate = `
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Car Pooling Trip - Home</title>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment-with-locales.min.js" integrity="sha512-42PE0rd+wZ2hNXftlM78BSehIGzezNeQuzihiBCvUEB3CVxHvsShF86wBWwQORNxNINlBPuq7rG4WWhNiTVHFg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 	<h1>Welcome to the Car Pooling Trip Platform!</h1>
 	<h2>Welcome <span id="usergroupspan"></span> <span id="firstnamespan"></span> <span id="lastnamespan"></span></h2>
 	<h2>Car Owner Redirection Test </h2>
@@ -182,6 +183,8 @@ const carownerTemplate = `
     		document.getElementById('viewTripContainer').style.display = 'block';
     		document.getElementById('message').style.display = 'none';
 			document.getElementById('publishContainer').style.display = 'none';
+			document.getElementById('confirmCancelTripContainer').style.display = 'none';
+			document.getElementById('tripList').style.display = 'block';
 		}
 		function getAllTrips() {
 			var xhr = new XMLHttpRequest();
@@ -224,8 +227,8 @@ const carownerTemplate = `
         		const listItem = document.createElement('p');
 				
 				const alternatePickUpLocation = trip['Alternate Pick-Up Location'] ? trip['Alternate Pick-Up Location']['String'] : '';
-				const startTravelingTime = new Date(trip['Start Traveling Time']);
-				const formattedStartTime = startTravelingTime.toLocaleTimeString();
+				const startTravelingTime = moment(trip['Start Traveling Time'], 'hh:mm A');
+				const formattedStartTime = startTravelingTime.format('h:mm A');
         		listItem.innerHTML = "ID: " + trip.ID + "<br>" +
                              "Pick-Up Location: " + trip['Pick-Up Location'] + "<br>" +
                              "Alternate Pick-Up Location: " + alternatePickUpLocation + "<br>" +
@@ -254,7 +257,7 @@ const carownerTemplate = `
 					cancelTripButton.type = 'button';
 					cancelTripButton.textContent = 'Cancel Trip';
 					cancelTripButton.onclick = function () {
-						startTrip(trip.ID);
+						confirmCancelTrip(trip.ID);
 					};
 				
 					tripDiv.appendChild(cancelTripButton);
@@ -267,24 +270,34 @@ const carownerTemplate = `
 			document.getElementById('viewProfileContainer').style.display = 'none';
 			document.getElementById('viewTripContainer').style.display = 'none';
 		}
-
+		
 		function publishTrip() {
 			const pickUpLocation = document.getElementById('pickUpLocation').value;
 			const altPickUpLocation = document.getElementById('altPickUpLocation').value;
 			const timeValue = document.getElementById('startTravelTime').value;
-
-    		// Format the time in ISO 8601 format with a fixed date
-    		const startTravelTime = new Date('2000-01-01T' + timeValue + ':00Z');
+		
+			// Create a new Date object using the provided timeValue
+			const startTravelTime = new Date('2000-01-01T' + timeValue);
+		
+			// Format the startTravelTime to 'HH:mm:ss'
+			const formattedTime = startTravelTime.toLocaleTimeString(undefined, {
+				hour12: false,
+				hour: '2-digit',
+				minute: '2-digit',
+				second: '2-digit'
+			});
+		
 			const destinationLocation = document.getElementById('destinationLocation').value;
 			const passengerNo = parseInt(document.getElementById('passengerNo').value);
 			const requestBody = {
 				"Pick-Up Location": pickUpLocation,
 				"Alternate Pick-Up Location": altPickUpLocation,
-				"Start Traveling Time": startTravelTime.toISOString(),
+				"Start Traveling Time": formattedTime,  // Use the formatted time
 				"Destination Location": destinationLocation,
 				"Number of Passengers Left": passengerNo,
 				"Maximum Number of Passengers": passengerNo,
 			};
+		
 			fetch('http://localhost:5000/api/v1/publishtrip/' + username, {
 				method: 'POST',
 				headers: {
@@ -307,30 +320,33 @@ const carownerTemplate = `
 				alert('Error publishing trip: ' + error.message);
 			});
 		}
-		function startTrip(tripID) {
-            fetch('http://localhost:5000/api/v1/starttrip/' + tripID, {
-                method: 'PUT',
+		function confirmCancelTrip(tripID) {
+			document.getElementById('tripIDspan').innerText = tripID;
+			document.getElementById('confirmCancelTripContainer').style.display = 'block';
+			document.getElementById('tripList').style.display = 'none';
+		}
+		function cancelTrip() {
+			const tripID = document.getElementById('tripIDspan').innerText;
+			fetch('http://localhost:5000/api/v1/canceltrip/' + tripID, {
+                method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    "ID": tripID,
-                    "Publisher": username,
-                }),
             })
             .then(response => {
                 if (response.ok) {
-                    document.getElementById('updateUserForm').style.display = 'none';
                     document.getElementById('message').style.display = 'block';
-                    document.getElementById('message').textContent = "Trip " + tripID + "'s status updated successfully";
+                    showMessage('Trip ' + tripID + ' canceled successfully');
                 } else {
-                    throw new Error('Trip status update failed');
+                    throw new Error("Trip cancellation failed. You cannot delete the trip within 30 minutes before the trip's Starting Travel Time.");
                 }
             })
             .catch(error => {
-                console.error('Error updating trip status:', error.message);
-            });
-		}
+                console.error('Error deleting user:', error.message);
+				document.getElementById('message').style.display = 'block';
+				document.getElementById('message').innerHTML = '<p style="color: red;">Error: ' + error.message + '</p>';
+    		}); 
+			}
 	</script>
 </head>
 <body>
@@ -363,6 +379,12 @@ const carownerTemplate = `
 	</div>
 	<div id="viewTripContainer">
 		<ul id="tripList"></ul>
+		<div id ="confirmCancelTripContainer">
+			<span>Are you sure you want to cancel Trip ID <span id="tripIDspan"></span>?</span>
+			<div>
+				<button type="button" onclick="cancelTrip()">Cancel Trip</button>
+			</div>
+		</div>
 	</div>
 	<div id="publishContainer">
 			<form id="publishTripForm">
@@ -373,7 +395,7 @@ const carownerTemplate = `
 				<label for="startTravelTime">Start Traveling Time:</label>
 				<input type="time" id="startTravelTime" required><br>
 				<label for="destinationLocation">Destination Location:</label>
-				<input type="text" id="destinationLocation" required><br>
+				<input type="text" id="destinationLocation" required pattern="[0-9]{2}:[0-9]{2}"><br>
 				<label for="passengerNo">Maximum Number of Passengers:</label>
 				<input type="text" id="passengerNo" required><br>
 				<button type="button" onclick="publishTrip()">Publish</button>

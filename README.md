@@ -1,8 +1,9 @@
 # ETI Assignment 1
 
 ### Instruction for setting up and running the microservices
-1. Run the two microservices (user.go & trip.go)
-2. Open index.html
+1. Run the MySQL Script for the Creation of Database and Table as well as Insertion of Records
+2. Run the two microservices (user.go & trip.go)
+3. Open index.html
 
 ### Design Considerations/Microservices
 The backend is split into two Microservices that do separate functions. Each Microservice has their own role and responsbility to fulfill while being linked to each other.
@@ -24,4 +25,5 @@ The Trip Microservice is designed to handle operations that involves managing th
 - Publishing trips with their own information such as Start Traveling Time, Pick-Up Location and Destination Location
 
 ### Architecture Diagram
-![architecture_diagram-v2](https://github.com/simon912/ETI-Assignment-1/assets/93958709/70622e04-3916-4edb-b1b4-c9b35ee9b212)
+![architecture_diagram-v2](https://github.com/simon912/ETI-Assignment-1/assets/93958709/4e89fd8e-c6f1-475a-afe0-469da707e88a)
+

@@ -690,7 +690,6 @@ func StartTrip(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Trip %s Status has been changed to Active\n", tripID)
 }
 
-// CancelTrip cancels a trip by deleting the record from the Trips table
 func CancelTrip(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	tripID := params["tripid"]
@@ -709,40 +708,46 @@ func CancelTrip(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if the trip exists
-	trip, found := getTripByID(tripIDInt)
+	_, found := getTripByID(tripIDInt)
 	if !found {
 		http.Error(w, "Trip not found", http.StatusNotFound)
 		return
 	}
-	query := "SELECT StartTravelTime FROM Trips WHERE ID = ?"
-	err = db.QueryRow(query, tripID).Scan(&trip.StartTravelTime)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	// Print Start Travel Time from the database
-	fmt.Println("Start Travel Time from Database:", trip.StartTravelTime)
 
-	// Parse the StartTravelTime from the database
-	dbStartTime, err := time.Parse("15:04:05", trip.StartTravelTime)
+	var dbStartTime string
+	err = db.QueryRow("SELECT StartTravelTime FROM Trips WHERE ID = ?", tripID).Scan(&dbStartTime)
 	if err != nil {
-		fmt.Println("Error parsing start time from the database:", err)
-		// Handle the error as needed
+		fmt.Println("Error retrieving StartTravelTime from the database:", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
-	// Print current time
-	currentTime := time.Now()
-	fmt.Println("Current Time:", currentTime)
+	// Parse the StartTravelTime from the database
+	startTime, err := time.Parse("15:04:05", dbStartTime)
+	if err != nil {
+		fmt.Println("Error parsing start time from the database:", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 
-	// Calculate the time difference between now and the trip start time from the database
-	timeDifference := time.Until(dbStartTime)
+	// Get the current time
+	currentTimeStr := time.Now().Format("15:04:05")
+	currentTime, err := time.Parse("15:04:05", currentTimeStr)
+	if err != nil {
+		fmt.Println("Error parsing current time string:", err)
+		// Handle the error as needed
+		return
+	}
+	// Calculate the time difference
+	timeDifference := currentTime.Sub(startTime)
 
-	// Check if the trip can be canceled (30 minutes before the start time)
+	// Print the adjusted time difference in minutes
+	fmt.Println("Adjusted Time Difference:", timeDifference)
+
+	// Check if the trip can be canceled (more than or equal to 30 minutes before the start time)
 	if timeDifference.Minutes() <= 30 {
-		fmt.Println("Cancellation window has passed. Cannot cancel the trip.")
-		http.Error(w, "Trip cannot be canceled. Cancellation window has passed", http.StatusBadRequest)
+		fmt.Println("Cancellation window has not passed. Cannot cancel the trip.")
+		http.Error(w, "Trip cannot be canceled. Cancellation window has not passed", http.StatusBadRequest)
 		return
 	}
 

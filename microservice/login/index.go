@@ -2,8 +2,8 @@
 package main
 
 import (
-	carowner_home "eti-assignment-1/frontend/carowner_home"
-	passenger_home "eti-assignment-1/frontend/passenger_home"
+	carowner_home "eti-assignment-1/microservice/carowner"
+	passenger_home "eti-assignment-1/microservice/passenger"
 	"fmt"
 	"html/template"
 	"net/http"

@@ -14,9 +14,8 @@ const carownerTemplate = `
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Car Pooling Trip - Home</title>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment-with-locales.min.js" integrity="sha512-42PE0rd+wZ2hNXftlM78BSehIGzezNeQuzihiBCvUEB3CVxHvsShF86wBWwQORNxNINlBPuq7rG4WWhNiTVHFg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-	<h1>Welcome to the Car Pooling Trip Platform!</h1>
+	<h1>Car Pooling Trip Platform</h1>
 	<h2>Welcome <span id="usergroupspan"></span> <span id="firstnamespan"></span> <span id="lastnamespan"></span></h2>
-	<h2>Car Owner Redirection Test </h2>
 	<style>
     #message {
         display: none;
@@ -140,7 +139,7 @@ const carownerTemplate = `
                 if (response.ok) {
                     document.getElementById('updateUserForm').style.display = 'none';
                     document.getElementById('message').style.display = 'block';
-                    document.getElementById('message').textContent = "User " + username + "'s info updated successfully";
+                    showMessage("User " + username + "'s info updated successfully");
                 } else {
                     throw new Error('User update failed');
                 }
@@ -395,9 +394,10 @@ const carownerTemplate = `
 				<label for="startTravelTime">Start Traveling Time:</label>
 				<input type="time" id="startTravelTime" required><br>
 				<label for="destinationLocation">Destination Location:</label>
-				<input type="text" id="destinationLocation" required pattern="[0-9]{2}:[0-9]{2}"><br>
+				<input type="text" id="destinationLocation" required"><br>
+				<span>You can only set a maximum number of Passengers up to 3<br></span>
 				<label for="passengerNo">Maximum Number of Passengers:</label>
-				<input type="text" id="passengerNo" required><br>
+				<input type="text" id="passengerNo" required max="3"><br>
 				<button type="button" onclick="publishTrip()">Publish</button>
 			</form>
 		</div>

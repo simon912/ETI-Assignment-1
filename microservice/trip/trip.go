@@ -154,15 +154,18 @@ func EnrollUser(w http.ResponseWriter, r *http.Request) {
 
 	// Check if the trip is full
 	if trip.PassengerNoLeft <= 0 {
-		http.Error(w, "Trip is already full", http.StatusBadRequest)
+		http.Error(w, `{"error": "Trip is already full"}`, http.StatusBadRequest)
 		return
 	}
 	// Check if user is already enrolled
 	if isUserEnrolled(tripIDInt, username) {
-		http.Error(w, "User is already enrolled in this trip", http.StatusBadRequest)
+		http.Error(w, `{"error": "User is already enrolled in this trip"}`, http.StatusBadRequest)
 		return
 	}
-
+	if isTripActive(tripIDInt) {
+		http.Error(w, `{"error": "Trip is Active"}`, http.StatusBadRequest)
+		return
+	}
 	// Insert enrollment record
 	enrollmentQuery := "INSERT INTO Enrollment (Username, TripID) VALUES (?, ?)"
 	_, err = db.Exec(enrollmentQuery, username, tripIDInt)
@@ -177,6 +180,27 @@ func EnrollUser(w http.ResponseWriter, r *http.Request) {
 	// Return success response
 	w.WriteHeader(http.StatusAccepted)
 	fmt.Fprintf(w, "User %s has been enrolled in trip ID %s!\n", username, tripID)
+}
+
+// Helper function to check if Trip is active
+func isTripActive(tripID int) bool {
+	db, err := sql.Open("mysql", "user:password@tcp(127.0.0.1:3306)/carpoolingtrip")
+	if err != nil {
+		fmt.Printf("Error opening database: %v\n", err)
+		return false
+	}
+	defer db.Close()
+
+	var status string
+	query := "SELECT Status FROM Trips WHERE TripID = ?"
+	err = db.QueryRow(query, tripID).Scan(&status)
+	if err != nil {
+		fmt.Printf("Error retrieving trip status: %v\n", err)
+		return false
+	}
+
+	// Check if the trip is marked as "Active"
+	return status == "Active"
 }
 
 // Helper function to get a trip by ID

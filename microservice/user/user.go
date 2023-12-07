@@ -4,9 +4,11 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -263,12 +265,14 @@ func ChangeToCarOwner(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "User %s has been changed to Car Owner!\n", username)
 }
 
+// Deletion of User
 func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	username := vars["username"]
 	db, err := sql.Open("mysql", "user:password@tcp(127.0.0.1:3306)/carpoolingtrip")
 	if err != nil {
-		panic(err.Error())
+		http.Error(w, fmt.Sprintf("Error opening database: %v", err), http.StatusInternalServerError)
+		return
 	}
 	defer db.Close()
 
@@ -277,39 +281,37 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	query := "SELECT CreationDateTime FROM Users WHERE Username = ?"
 	err = db.QueryRow(query, username).Scan(&creationDateStr)
 	if err != nil {
-		fmt.Printf("Error retrieving user creation date: %v\n", err)
-		http.Error(w, "Error retrieving user creation date", http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("Error retrieving user creation date: %v", err), http.StatusInternalServerError)
 		return
 	}
 
 	// Parse the creation date string into a time.Time value
 	creationDate, err := time.Parse("2006-01-02", creationDateStr)
 	if err != nil {
-		fmt.Printf("Error parsing creation date: %v\n", err)
-		http.Error(w, "Error parsing creation date", http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("Error parsing creation date: %v", err), http.StatusInternalServerError)
 		return
 	}
 
 	// Calculate the age of the user
 	age := time.Since(creationDate).Hours() / 24 // Convert to days
-
 	// Check if the user is over 1 year old (365 days)
 	if age >= 365 {
 		// Check if the user is referenced in the trips table
-		tripsReferenced, err := isUserReferencedInTrips(db, username)
+		err := deleteUser(w, db, username)
 		if err != nil {
-			fmt.Printf("Error checking references in Trips table: %v\n", err)
-			http.Error(w, "Error checking references in Trips table", http.StatusInternalServerError)
+			if strings.Contains(err.Error(), "user cannot be deleted: the user has already published a trip or is enrolled in a trip") {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+			} else if strings.Contains(err.Error(), "user cannot be deleted: the user is referenced in other records") {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+			} else {
+				http.Error(w, "Error deleting user", http.StatusInternalServerError)
+			}
 			return
 		}
 
-		if tripsReferenced {
-			http.Error(w, "User cannot be deleted. User has already published Trip(s).", http.StatusBadRequest)
-			return
-		}
-
-		// If the user is over 1 year old and not referenced in trips, delete the user
-		deleteUser(w, username)
+		// Respond with success message or redirect as needed
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintf(w, "User %s deleted successfully", username)
 	} else {
 		// If the user is not over 1 year old, return error
 		http.Error(w, "User must be over 1 year old for deletion", http.StatusBadRequest)
@@ -317,49 +319,61 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 }
 
 // Helper function to delete the user
-func deleteUser(w http.ResponseWriter, username string) {
-	db, err := sql.Open("mysql", "user:password@tcp(127.0.0.1:3306)/carpoolingtrip")
-	if err != nil {
-		panic(err.Error())
-	}
-	defer db.Close()
-
+func deleteUser(w http.ResponseWriter, db *sql.DB, username string) error {
 	// Check if the user is referenced in the trips table
-	tripsReferenced, err := isUserReferencedInTrips(db, username)
+	referenced, err := isUserReferencedInTripsOrEnrollment(db, username)
 	if err != nil {
-		fmt.Printf("Error checking references in Trips table: %v\n", err)
-		http.Error(w, "Error checking references in Trips table", http.StatusInternalServerError)
-		return
+		return fmt.Errorf("error checking references in Trips or Enrollment table: %v", err)
 	}
 
-	if tripsReferenced {
-		http.Error(w, "User cannot be deleted. User has already published Trip(s).", http.StatusBadRequest)
-		return
+	if referenced {
+		return errors.New("user cannot be deleted: The user has already published a trip or is enrolled in a trip")
 	}
 
 	// Delete the user
 	query := "DELETE FROM Users WHERE Username = ?"
 	result, err := db.Exec(query, username)
 	if err != nil {
-		panic(err.Error())
+		// Check for foreign key constraint violation
+		if strings.Contains(err.Error(), "foreign key constraint") {
+			return errors.New("user cannot be deleted: The user is referenced in other records")
+		}
+		return fmt.Errorf("error deleting user: %v", err)
 	}
+
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		panic(err.Error())
+		return fmt.Errorf("error getting rows affected: %v", err)
 	}
 
 	if rowsAffected == 0 {
-		http.Error(w, "User not found", http.StatusNotFound)
-		return
+		return errors.New("user not found")
 	}
 
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "User %s deleted successfully", username)
+	return nil
 }
 
-// Helper function to check if the user is referenced in the Trips table
-func isUserReferencedInTrips(db *sql.DB, username string) (bool, error) {
-	query := "SELECT COUNT(*) FROM Trips WHERE Publisher = ?"
+// Helper function to check if the user is referenced in the Trips or Enrollment table
+func isUserReferencedInTripsOrEnrollment(db *sql.DB, username string) (bool, error) {
+	// Check Trips table
+	tripsReferenced, err := isUserReferencedInTable(db, "Trips", "Publisher", username)
+	if err != nil {
+		return false, err
+	}
+
+	// Check Enrollment table
+	enrollmentReferenced, err := isUserReferencedInTable(db, "Enrollment", "Username", username)
+	if err != nil {
+		return false, err
+	}
+
+	// Return true if referenced in either table
+	return tripsReferenced || enrollmentReferenced, nil
+}
+
+// Helper function to check if the user is referenced in a specific table
+func isUserReferencedInTable(db *sql.DB, tableName, columnName, username string) (bool, error) {
+	query := fmt.Sprintf("SELECT COUNT(*) FROM %s WHERE %s = ?", tableName, columnName)
 	var count int
 	err := db.QueryRow(query, username).Scan(&count)
 	if err != nil {

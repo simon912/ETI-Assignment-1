@@ -16,6 +16,7 @@
 	}
 </style>
  <script>
+	
  		const urlParams = new URLSearchParams(window.location.search);
 		const username = urlParams.get('username');
 		window.onload = function () {
@@ -251,7 +252,7 @@
         		const startTravelingTime = moment(trip['Start Traveling Time'], 'hh:mm A');
 				const formattedStartTime = startTravelingTime.format('h:mm A');
 
-				listItem.innerHTML = "ID: " + trip.ID + "<br>" +
+				listItem.innerHTML = "ID: " + trip['Trip ID'] + "<br>" +
 					"Pick-Up Location: " + trip['Pick-Up Location'] + "<br>" +
 					"Alternate Pick-Up Location: " + alternatePickUpLocation + "<br>" +
 					"Start Traveling Time: " + formattedStartTime + "<br>" +
@@ -264,9 +265,9 @@
 				// Button for Viewing the Detail
 				const enrollButton = document.createElement('button');
 				enrollButton.type = 'button';
-				enrollButton.textContent = 'Enroll into Trip ID ' + trip.ID;
+				enrollButton.textContent = 'Enroll into Trip ID ' + trip['Trip ID'];
 				enrollButton.onclick = function () {
-					const tripID = trip.ID;
+					const tripID = trip['Trip ID'];
 					enrollTrip(tripID, username);
 				};
 				const buttonDiv = document.createElement('div');

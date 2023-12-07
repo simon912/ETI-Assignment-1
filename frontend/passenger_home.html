@@ -198,15 +198,20 @@ function deleteUser(username) {
     .then(data => {
         if (data && data.error) {
             // Display specific error messages based on the server response
-            if (data.error.includes("User cannot be deleted: The user has already published a trip or is enrolled in a trip.")) {
-                showMessage("User cannot be deleted. The user has already published a trip or is enrolled in a trip.");
-            } else {
+            if (data.error.includes("User is not over 1 year old yet")) {
+                showMessage("User is not over 1 year old yet");
+            } else if (data.error.includes("User has published a Trip")) {
+				showMessage("User has published a Trip");
+			} else if (data.error.includes("User is enrolled in a Trip")) {
+				showMessage("User is enrolled in a Trip");
+			}
+			else {
                 showMessage("An error occurred during user deletion.");
             }
         }
     })
     .catch(error => {
-        showMessage('Error: You either published or enrolled in a trip or you are not over 1 year old yet');
+        showMessage('An error occurred during user deletion.');
     });
 }
 

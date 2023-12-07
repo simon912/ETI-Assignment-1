@@ -455,12 +455,13 @@ func CancelTrip(w http.ResponseWriter, r *http.Request) {
 
 	// Check if the trip can be canceled (more than or equal to 30 minutes before the start time)
 	if timeDifference.Minutes() >= -30 && timeDifference.Minutes() <= 30 {
-		fmt.Println("Cancellation window is within 30 minutes. Cannot cancel the trip.")
-		http.Error(w, "Trip cannot be canceled. Cancellation window is within 30 minutes", http.StatusBadRequest)
+		http.Error(w, `{"error": "Cancellation window is within 30 minutes"}`, http.StatusBadRequest)
 		return
 	}
-	// Delete the trip from the Trips table
+	// Delete the trip from the Trips table and other related enrollment from Enrollment table
+	deleteEnrollmentsForTrip(tripIDInt)
 	deleteTrip(w, tripIDInt)
+	
 	// Return success response
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "Trip ID %s has been canceled successfully\n", tripID)
@@ -494,4 +495,17 @@ func deleteTrip(w http.ResponseWriter, tripID int) {
 		http.Error(w, "Trip not found", http.StatusNotFound)
 		return
 	}
+}
+// Helper function to delete enrollments for a trip
+func deleteEnrollmentsForTrip(tripID int) error {
+    db, err := sql.Open("mysql", "user:password@tcp(127.0.0.1:3306)/carpoolingtrip")
+    if err != nil {
+        return err
+    }
+    defer db.Close()
+
+    // Delete enrollments for the specified trip
+    query := "DELETE FROM Enrollment WHERE TripID = ?"
+    _, err = db.Exec(query, tripID)
+    return err
 }

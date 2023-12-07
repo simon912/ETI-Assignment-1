@@ -1,380 +1,443 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Car Pooling Trip - Home</title>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment-with-locales.min.js" integrity="sha512-42PE0rd+wZ2hNXftlM78BSehIGzezNeQuzihiBCvUEB3CVxHvsShF86wBWwQORNxNINlBPuq7rG4WWhNiTVHFg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-	<h1>Car Pooling Trip Platform</h1>
-	<h2>Welcome <span id="usergroupspan"></span> <span id="firstnamespan"></span> <span id="lastnamespan"></span></h2>
-	<style>
-    #message {
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment-with-locales.min.js"
+      integrity="sha512-42PE0rd+wZ2hNXftlM78BSehIGzezNeQuzihiBCvUEB3CVxHvsShF86wBWwQORNxNINlBPuq7rG4WWhNiTVHFg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <h1>Car Pooling Trip Platform</h1>
+    <h2>
+      Welcome <span id="usergroupspan"></span> <span id="firstnamespan"></span>
+      <span id="lastnamespan"></span>
+    </h2>
+    <style>
+      #message {
         display: none;
-    }
-	#updateUserContainer, #changeCarOwnerContainer, #viewProfileContainer, #viewTripContainer {
-		display: none;
-	}
-</style>
- <script>
-	
- 		const urlParams = new URLSearchParams(window.location.search);
-		const username = urlParams.get('username');
-		window.onload = function () {
-			retrieveUserData();
-		}
-        function showMessage(message) {
-            const messageContainer = document.getElementById('message');
-            messageContainer.innerHTML = message;
-            messageContainer.style.display = 'block';
+      }
+      #updateUserContainer,
+      #changeCarOwnerContainer,
+      #viewProfileContainer,
+      #viewTripContainer {
+        display: none;
+      }
+    </style>
+    <script>
+      const urlParams = new URLSearchParams(window.location.search);
+      const username = urlParams.get("username");
+      window.onload = function () {
+        retrieveUserData();
+      };
+      function showMessage(message) {
+        const messageContainer = document.getElementById("message");
+        messageContainer.innerHTML = message;
+        messageContainer.style.display = "block";
 
-            setTimeout(() => {
-                messageContainer.style.display = 'none';
-            }, 3000);
-        }
-		function showProfileContainer() {
-			document.getElementById('viewProfileContainer').style.display = 'block';
-			document.getElementById('viewTripContainer').style.display = 'none';
-			document.getElementById('confirmDeleteContainer').style.display = 'none';
-		}
-		function retrieveUserData() {
-			// Send a GET request to /api/v1/user/{username} endpoint for user data
-			fetch('http://localhost:5000/api/v1/user/' + username, {
-				method: 'GET',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-			})
-			.then(response => {
-				if (response.ok) {
-					return response.json();
-				} else {
-					throw new Error('Failed to retrieve user data');
-				}
-			})
-			.then(data => {
-				// Assuming the backend sends JSON data with user details
-				console.log('Response Data:', data);
-				// Extract usergroup, firstname, and lastname from the data
-				const usergroup = data['User Group'];
-				const firstname = data['First Name'];
-				const lastname = data['Last Name'];
-				
-				const userGroupSpan = document.getElementById('usergroupspan');
-            	userGroupSpan.innerHTML = usergroup;
-				const firstNameSpan = document.getElementById('firstnamespan');
-            	firstNameSpan.innerHTML = firstname;
-				const lastNameSpan = document.getElementById('lastnamespan');
-            	lastNameSpan.innerHTML = lastname;
-			})
-			.catch(error => {
-				// Display an error message or handle the error appropriately
-				showMessage('Failed to retrieve user data.');
-			});
-		}
-		// For Profile
-		function showUserInfo() {
-			// Send a GET request to /api/v1/user/{username} endpoint for user data
-			fetch('http://localhost:5000/api/v1/user/' + username, {
-				method: 'GET',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-			})
-			.then(response => {
-				if (response.ok) {
-					return response.json();
-				} else {
-					throw new Error('Failed to retrieve user data');
-				}
-			})
-			.then(data => {
-				// Assuming the backend sends JSON data with user details
-				console.log('Response Data:', data);
-				// Extract usergroup, firstname, and lastname from the data
-				const usergroup = data['User Group'];
-				const firstname = data['First Name'];
-				const lastname = data['Last Name'];
-				const mobileno = data['Mobile Number'];
-				const emailaddr = data['Email Address'];
-				document.getElementById('updateUsername').value = username;
-				document.getElementById('updateMobileNo').value = mobileno;
-				document.getElementById('updateEmailAddr').value = emailaddr;
-			})
-			.catch(error => {
-				// Display an error message or handle the error appropriately
-				showMessage('Failed to retrieve user data.');
-			});
-            document.getElementById('updateUserForm').style.display = 'block';
-			document.getElementById('changeCarOwnerContainer').style.display = 'none';
-			document.getElementById('confirmDeleteContainer').style.display = 'none';
-			document.getElementById('updateUserContainer').style.display = 'block';
-		}
-		function showChangeCarOwner() {
-			document.getElementById('updateUserContainer').style.display = 'none';
-			document.getElementById('changeCarOwnerContainer').style.display = 'block';
-			document.getElementById('confirmDeleteContainer').style.display = 'none';
-
-			document.getElementById('carownerLicenseNo').value = '';
-			document.getElementById('carownerCarPlateNo').value = '';
-            document.getElementById('changeCarOwnerForm').style.display = 'block';
-		}
-		function updateUserInfo(username) {
-            const mobilenumber = parseInt(document.getElementById('updateMobileNo').value);
-            const emailaddr = document.getElementById('updateEmailAddr').value;
-        
-            fetch('http://localhost:5000/api/v1/updateuser/' + username, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    "Mobile Number": mobilenumber,
-                    "Email Address": emailaddr,
-                }),
-            })
-            .then(response => {
-                if (response.ok) {
-                    document.getElementById('updateUserForm').style.display = 'none';
-                    document.getElementById('message').style.display = 'block';
-                    showMessage("User " + username + "'s info updated successfully");
-					
-                } else {
-                    throw new Error('User update failed');
-                }
-            })
-            .catch(error => {
-                console.error('Error updating user:', error.message);
-            });
-        }
-		function changeCarOwner(username) {
-            const licenseno = parseInt(document.getElementById('carownerLicenseNo').value);
-            const plateno = document.getElementById('carownerCarPlateNo').value;
-            fetch('http://localhost:5000/api/v1/changecarowner/' + username, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    "License Number": licenseno,
-                    "Plate Number": plateno,
-                }),
-            })
-            .then(response => {
-                if (response.ok) {
-					alert("User " + username + " changed to Car Owner. You will be logged out immediately.")
-					window.location.href = 'index.html';
-
-                } else {
-                    throw new Error('User update failed');
-                }
-            })
-            .catch(error => {
-                console.error('Error updating user:', error.message);
-            });
-        }
-		// Confirmation message for deleting user
-		function showDeleteConfirmation() {
-			document.getElementById('changeCarOwnerContainer').style.display = 'none';
-			document.getElementById('updateUserContainer').style.display = 'none';
-			document.getElementById('confirmDeleteContainer').style.display = 'block';
-		}
-		// Deletion of user
-		// Deletion of user
-function deleteUser(username) {
-    fetch('http://localhost:5000/api/v1/delete/' + username, {
-        method: 'DELETE',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-    })
-    .then(response => {
-        if (response.ok) {
-            alert('User ' + username + ' deleted, you will be logged out');
-            window.location.href = 'index.html';
-        } else {
-            return response.json(); // Parse the JSON in the response
-        }
-    })
-    .then(data => {
-        if (data && data.error) {
-            // Display specific error messages based on the server response
-            if (data.error.includes("User is not over 1 year old yet")) {
-                showMessage("User is not over 1 year old yet");
-            } else if (data.error.includes("User has published a Trip")) {
-				showMessage("User has published a Trip");
-			} else if (data.error.includes("User is enrolled in a Trip")) {
-				showMessage("User is enrolled in a Trip");
-			}
-			else {
-                showMessage("An error occurred during user deletion.");
+        setTimeout(() => {
+          messageContainer.style.display = "none";
+        }, 3000);
+      }
+      function showProfileContainer() {
+        document.getElementById("viewProfileContainer").style.display = "block";
+        document.getElementById("viewTripContainer").style.display = "none";
+        document.getElementById("confirmDeleteContainer").style.display =
+          "none";
+      }
+      function retrieveUserData() {
+        // Send a GET request to /api/v1/user/{username} endpoint for user data
+        fetch("http://localhost:5000/api/v1/user/" + username, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        })
+          .then((response) => {
+            if (response.ok) {
+              return response.json();
+            } else {
+              throw new Error("Failed to retrieve user data");
             }
-        }
-    })
-    .catch(error => {
-        showMessage('An error occurred during user deletion.');
-    });
-}
+          })
+          .then((data) => {
+            // Assuming the backend sends JSON data with user details
+            console.log("Response Data:", data);
+            // Extract usergroup, firstname, and lastname from the data
+            const usergroup = data["User Group"];
+            const firstname = data["First Name"];
+            const lastname = data["Last Name"];
 
-		// For Trip
-		function showTripsContainer() {
-			getAllTrips();
-    		document.getElementById('viewProfileContainer').style.display = 'none';
-    		document.getElementById('viewTripContainer').style.display = 'block';
-    		document.getElementById('message').style.display = 'none';
-			document.getElementById('confirmDeleteContainer').style.display = 'none';
-		}
-		function getAllTrips() {
-			var xhr = new XMLHttpRequest();
-			xhr.open('GET', 'http://localhost:5001/api/v1/trips', true);
-		
-			xhr.onload = function () {
-				if (xhr.status >= 200 && xhr.status < 300) {
-					console.log('Raw Response:', xhr.responseText);
-		
-					if (xhr.responseText.trim() !== "") {
-						try {
-							var data = JSON.parse(xhr.responseText);
-							console.log('Trips:', data);
-							updateTripList(data);
-                            document.getElementById('viewTripContainer').style.display = 'block';
-                            document.getElementById('viewProfileContainer').style.display = 'none';
-                            document.getElementById('message').style.display = 'none';
-						} catch (error) {
-							console.error('Error parsing JSON:', error);
-						}
-					} else {
-						console.error('Error: Empty response body');
-					}
-				} else {
-					console.error('Error:', xhr.status, xhr.statusText);
-				}
-			};
-			xhr.onerror = function () {
-				console.error('Network error occurred');
-			};
-			xhr.send();
-		}
-		
-		function updateTripList(trips) {
-			const tripList = document.getElementById('tripList');
-			tripList.innerHTML = '';
-			trips.forEach(trip => {
-				const tripDiv = document.createElement('div');
-				const listItem = document.createElement('p');
-		
-				const alternatePickUpLocation = trip['Alternate Pick-Up Location'] ? trip['Alternate Pick-Up Location']['String'] : '';
+            const userGroupSpan = document.getElementById("usergroupspan");
+            userGroupSpan.innerHTML = usergroup;
+            const firstNameSpan = document.getElementById("firstnamespan");
+            firstNameSpan.innerHTML = firstname;
+            const lastNameSpan = document.getElementById("lastnamespan");
+            lastNameSpan.innerHTML = lastname;
+          })
+          .catch((error) => {
+            // Display an error message or handle the error appropriately
+            showMessage("Failed to retrieve user data.");
+          });
+      }
+      // For Profile
+      function showUserInfo() {
+        // Send a GET request to /api/v1/user/{username} endpoint for user data
+        fetch("http://localhost:5000/api/v1/user/" + username, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        })
+          .then((response) => {
+            if (response.ok) {
+              return response.json();
+            } else {
+              throw new Error("Failed to retrieve user data");
+            }
+          })
+          .then((data) => {
+            // Assuming the backend sends JSON data with user details
+            console.log("Response Data:", data);
+            // Extract usergroup, firstname, and lastname from the data
+            const usergroup = data["User Group"];
+            const firstname = data["First Name"];
+            const lastname = data["Last Name"];
+            const mobileno = data["Mobile Number"];
+            const emailaddr = data["Email Address"];
+            document.getElementById("updateUsername").value = username;
+            document.getElementById("updateMobileNo").value = mobileno;
+            document.getElementById("updateEmailAddr").value = emailaddr;
+          })
+          .catch((error) => {
+            // Display an error message or handle the error appropriately
+            showMessage("Failed to retrieve user data.");
+          });
+        document.getElementById("updateUserForm").style.display = "block";
+        document.getElementById("changeCarOwnerContainer").style.display =
+          "none";
+        document.getElementById("confirmDeleteContainer").style.display =
+          "none";
+        document.getElementById("updateUserContainer").style.display = "block";
+      }
+      function showChangeCarOwner() {
+        document.getElementById("updateUserContainer").style.display = "none";
+        document.getElementById("changeCarOwnerContainer").style.display =
+          "block";
+        document.getElementById("confirmDeleteContainer").style.display =
+          "none";
 
-        		const startTravelingTime = moment(trip['Start Traveling Time'], 'hh:mm A');
-				const formattedStartTime = startTravelingTime.format('h:mm A');
+        document.getElementById("carownerLicenseNo").value = "";
+        document.getElementById("carownerCarPlateNo").value = "";
+        document.getElementById("changeCarOwnerForm").style.display = "block";
+      }
+      function updateUserInfo(username) {
+        const mobilenumber = parseInt(
+          document.getElementById("updateMobileNo").value
+        );
+        const emailaddr = document.getElementById("updateEmailAddr").value;
 
-				listItem.innerHTML = "ID: " + trip['Trip ID'] + "<br>" +
-					"Pick-Up Location: " + trip['Pick-Up Location'] + "<br>" +
-					"Alternate Pick-Up Location: " + alternatePickUpLocation + "<br>" +
-					"Start Traveling Time: " + formattedStartTime + "<br>" +
-					"Destination Location: " + trip['Destination Location'] + "<br>" +
-					"Vacancies: " + trip['Number of Passengers Left'] + "/" + trip['Maximum Number of Passengers'] + "<br>" +
-					"Status: " + trip['Status'] + "<br>" +
-					"Published By: " + trip['Publisher'];
-				tripDiv.appendChild(listItem);
-		
-				// Button for Viewing the Detail
-				const enrollButton = document.createElement('button');
-				enrollButton.type = 'button';
-				enrollButton.textContent = 'Enroll into Trip ID ' + trip['Trip ID'];
-				enrollButton.onclick = function () {
-					const tripID = trip['Trip ID'];
-					enrollTrip(tripID, username);
-				};
-				const buttonDiv = document.createElement('div');
-				buttonDiv.appendChild(enrollButton);
-				tripDiv.appendChild(buttonDiv);
-				tripList.appendChild(tripDiv);
-			});
-		}
-		
-		
-		function enrollTrip(tripID, username) {
-			fetch('http://localhost:5001/api/v1/enroll/' + tripID + '/' + username, {
-				method: 'PUT',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				// You can include a request body if needed
-				// body: JSON.stringify({ /* your data here */ }),
-			})
-			.then(response => {
-				if (response.ok) {
-					// Handle success, e.g., show a success message
-					alert('Enrolled successfully in Trip ID ' + tripID);
-					location.reload();
+        fetch("http://localhost:5000/api/v1/updateuser/" + username, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            "Mobile Number": mobilenumber,
+            "Email Address": emailaddr,
+          }),
+        })
+          .then((response) => {
+            if (response.ok) {
+              document.getElementById("updateUserForm").style.display = "none";
+              document.getElementById("message").style.display = "block";
+              showMessage("User " + username + "'s info updated successfully");
+            } else {
+              throw new Error("User update failed");
+            }
+          })
+          .catch((error) => {
+            console.error("Error updating user:", error.message);
+          });
+      }
+      function changeCarOwner(username) {
+        const licenseno = parseInt(
+          document.getElementById("carownerLicenseNo").value
+        );
+        const plateno = document.getElementById("carownerCarPlateNo").value;
+        fetch("http://localhost:5000/api/v1/changecarowner/" + username, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            "License Number": licenseno,
+            "Plate Number": plateno,
+          }),
+        })
+          .then((response) => {
+            if (response.ok) {
+              alert(
+                "User " +
+                  username +
+                  " changed to Car Owner. You will be logged out immediately."
+              );
+              window.location.href = "index.html";
+            } else {
+              throw new Error("User update failed");
+            }
+          })
+          .catch((error) => {
+            console.error("Error updating user:", error.message);
+          });
+      }
+      // Confirmation message for deleting user
+      function showDeleteConfirmation() {
+        document.getElementById("changeCarOwnerContainer").style.display =
+          "none";
+        document.getElementById("updateUserContainer").style.display = "none";
+        document.getElementById("confirmDeleteContainer").style.display =
+          "block";
+      }
+      // Deletion of user
+      // Deletion of user
+      function deleteUser(username) {
+        fetch("http://localhost:5000/api/v1/delete/" + username, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        })
+          .then((response) => {
+            if (response.ok) {
+              alert("User " + username + " deleted, you will be logged out");
+              window.location.href = "index.html";
+            } else {
+              return response.json(); // Parse the JSON in the response
+            }
+          })
+          .then((data) => {
+            if (data && data.error) {
+              // Display specific error messages based on the server response
+              if (data.error.includes("User is not over 1 year old yet")) {
+                showMessage("Delete Error: User is not over 1 year old yet");
+              } else if (data.error.includes("User has published a Trip")) {
+                showMessage("Delete Error: User has already published a Trip");
+              } else if (data.error.includes("User is enrolled in a Trip")) {
+                showMessage("Delete Error: User is already enrolled in a Trip");
+              } else {
+                showMessage("An error occurred during user deletion.");
+              }
+            }
+          })
+          .catch((error) => {
+            showMessage("An error occurred during user deletion.");
+          });
+      }
 
-				} else {
-					return response.json();
-				}
-			})
-			.then(data => {
-    		console.log(data); // Log the data object
-    		if (data && data.error) {
-        	// Display specific error messages based on the server response
-        	if (data.error.includes("User is already enrolled in this trip")) {
-            	alert('You have already enrolled in this trip.');
-        	} else if (data.error.includes("Trip is already full")) {
-            	alert('The trip is already full.');
-        	} else if (data.error.includes("Trip is not active")) {
-            	alert('The trip is not active.');
-        	} else {
-            	alert('Failed to enroll in the trip.');
-        	}
-    		}
-		})
-			.catch(error => {
-				// Handle network errors or other issues
-				console.error('Error enrolling in trip:', error.message);
-				alert('Failed to enroll in the trip. The trip may be full or Active.');
-			});
-		}
-	</script>
-</head>
-<body>
-	<div id="userButtonList">
-	<button type="button" onclick="showProfileContainer()">View Profile</button>
-	<button type="button" onclick="showTripsContainer()">View Trips</button>
-	<a href="index.html"><button type="button">Log Out</button></a>
-	</div>
-	<div id="viewProfileContainer">
-		<button type="button" onclick="showChangeCarOwner()">Change to Car Owner</button>
-		<button type="button" onclick="showUserInfo()">Update Profile</button>
-		<button type="button" onclick="showDeleteConfirmation()">Delete Profile</button>
-		<div id="changeCarOwnerContainer">
-			<form id="changeCarOwnerForm">
-				<label for="carownerLicenseNo">Your Driver's License Number:</label>
-				<input type="text" id="carownerLicenseNo" required><br>
-				<label for="carownerCarPlateNo">Your Car Plate Number:</label>
-				<input type="text" id="carownerCarPlateNo" required><br>
-				<button type="button" onclick="changeCarOwner(username)">Change to Car Owner</button>
-			</form>
-		</div>
-		<div id="confirmDeleteContainer">
-			<span>Are you sure you want to delete your user?</span>
-			<div>
-				<button type="button" onclick="deleteUser(username)">Delete</button>
-			</div>
-		</div>
-		<div id="updateUserContainer">
-			<form id="updateUserForm">
-				<label for="updateUsername">Username:</label>
-				<input type="text" id="updateUsername" readonly><br>
-				<label for="updateMobileNo">Mobile Number:</label>
-				<input type="text" id="updateMobileNo" required><br>
-				<label for="updateEmailAddr">Email Address:</label>
-				<input type="text" id="updateEmailAddr" required><br>
-				<button type="button" onclick="updateUserInfo(username)">Update</button>
-			</form>
-		</div>
-	</div>
-	<div id="viewTripContainer">
-		<ul id="tripList"></ul>
-	</div>
+      // For Trip
+      function showTripsContainer() {
+        getAllTrips();
+        document.getElementById("viewProfileContainer").style.display = "none";
+        document.getElementById("viewTripContainer").style.display = "block";
+        document.getElementById("message").style.display = "none";
+        document.getElementById("confirmDeleteContainer").style.display =
+          "none";
+      }
+      function getAllTrips() {
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", "http://localhost:5001/api/v1/trips", true);
+
+        xhr.onload = function () {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            console.log("Raw Response:", xhr.responseText);
+
+            if (xhr.responseText.trim() !== "") {
+              try {
+                var data = JSON.parse(xhr.responseText);
+                console.log("Trips:", data);
+                updateTripList(data);
+                document.getElementById("viewTripContainer").style.display =
+                  "block";
+                document.getElementById("viewProfileContainer").style.display =
+                  "none";
+                document.getElementById("message").style.display = "none";
+              } catch (error) {
+                console.error("Error parsing JSON:", error);
+              }
+            } else {
+              console.error("Error: Empty response body");
+            }
+          } else {
+            console.error("Error:", xhr.status, xhr.statusText);
+          }
+        };
+        xhr.onerror = function () {
+          console.error("Network error occurred");
+        };
+        xhr.send();
+      }
+
+      function updateTripList(trips) {
+        const tripList = document.getElementById("tripList");
+        tripList.innerHTML = "";
+        trips.forEach((trip) => {
+          const tripDiv = document.createElement("div");
+          const listItem = document.createElement("p");
+
+          const alternatePickUpLocation = trip["Alternate Pick-Up Location"]
+            ? trip["Alternate Pick-Up Location"]["String"]
+            : "";
+
+          const startTravelingTime = moment(
+            trip["Start Traveling Time"],
+            "hh:mm A"
+          );
+          const formattedStartTime = startTravelingTime.format("h:mm A");
+
+          listItem.innerHTML =
+            "ID: " +
+            trip["Trip ID"] +
+            "<br>" +
+            "Pick-Up Location: " +
+            trip["Pick-Up Location"] +
+            "<br>" +
+            "Alternate Pick-Up Location: " +
+            alternatePickUpLocation +
+            "<br>" +
+            "Start Traveling Time: " +
+            formattedStartTime +
+            "<br>" +
+            "Destination Location: " +
+            trip["Destination Location"] +
+            "<br>" +
+            "Vacancies: " +
+            trip["Number of Passengers Left"] +
+            "/" +
+            trip["Maximum Number of Passengers"] +
+            "<br>" +
+            "Status: " +
+            trip["Status"] +
+            "<br>" +
+            "Published By: " +
+            trip["Publisher"];
+          tripDiv.appendChild(listItem);
+
+          // Button for Viewing the Detail
+          const enrollButton = document.createElement("button");
+          enrollButton.type = "button";
+          enrollButton.textContent = "Enroll into Trip ID " + trip["Trip ID"];
+          enrollButton.onclick = function () {
+            const tripID = trip["Trip ID"];
+            enrollTrip(tripID, username);
+          };
+          const buttonDiv = document.createElement("div");
+          buttonDiv.appendChild(enrollButton);
+          tripDiv.appendChild(buttonDiv);
+          tripList.appendChild(tripDiv);
+        });
+      }
+
+      function enrollTrip(tripID, username) {
+        fetch(
+          "http://localhost:5001/api/v1/enroll/" + tripID + "/" + username,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            // You can include a request body if needed
+            // body: JSON.stringify({ /* your data here */ }),
+          }
+        )
+          .then((response) => {
+            if (response.ok) {
+              // Handle success, e.g., show a success message
+              alert("Enrolled successfully in Trip ID " + tripID);
+              location.reload();
+            } else {
+              return response.json();
+            }
+          })
+          .then((data) => {
+            console.log(data); // Log the data object
+            if (data && data.error) {
+              // Display specific error messages based on the server response
+              if (
+                data.error.includes("User is already enrolled in this trip")
+              ) {
+                alert("You have already enrolled in this trip.");
+              } else if (data.error.includes("Trip is already full")) {
+                alert("The trip is already full.");
+              } else if (data.error.includes("Trip is not active")) {
+                alert("The trip is not active.");
+              } else {
+                alert("Failed to enroll in the trip.");
+              }
+            }
+          })
+          .catch((error) => {
+            // Handle network errors or other issues
+            console.error("Error enrolling in trip:", error.message);
+            alert(
+              "Failed to enroll in the trip. The trip may be full or Active."
+            );
+          });
+      }
+    </script>
+  </head>
+  <body>
+    <div id="userButtonList">
+      <button type="button" onclick="showProfileContainer()">
+        View Profile
+      </button>
+      <button type="button" onclick="showTripsContainer()">View Trips</button>
+      <a href="index.html"><button type="button">Log Out</button></a>
+    </div>
+    <div id="viewProfileContainer">
+      <button type="button" onclick="showChangeCarOwner()">
+        Change to Car Owner
+      </button>
+      <button type="button" onclick="showUserInfo()">Update Profile</button>
+      <button type="button" onclick="showDeleteConfirmation()">
+        Delete Profile
+      </button>
+      <div id="changeCarOwnerContainer">
+        <form id="changeCarOwnerForm">
+          <label for="carownerLicenseNo">Your Driver's License Number:</label>
+          <input type="text" id="carownerLicenseNo" required /><br />
+          <label for="carownerCarPlateNo">Your Car Plate Number:</label>
+          <input type="text" id="carownerCarPlateNo" required /><br />
+          <button type="button" onclick="changeCarOwner(username)">
+            Change to Car Owner
+          </button>
+        </form>
+      </div>
+      <div id="confirmDeleteContainer">
+        <span>Are you sure you want to delete your user?</span>
+        <div>
+          <button type="button" onclick="deleteUser(username)">Delete</button>
+        </div>
+      </div>
+      <div id="updateUserContainer">
+        <form id="updateUserForm">
+          <label for="updateUsername">Username:</label>
+          <input type="text" id="updateUsername" readonly /><br />
+          <label for="updateMobileNo">Mobile Number:</label>
+          <input type="text" id="updateMobileNo" required /><br />
+          <label for="updateEmailAddr">Email Address:</label>
+          <input type="text" id="updateEmailAddr" required /><br />
+          <button type="button" onclick="updateUserInfo(username)">
+            Update
+          </button>
+        </form>
+      </div>
+    </div>
+    <div id="viewTripContainer">
+      <ul id="tripList"></ul>
+    </div>
     <div id="message"></div>
-</body>
+  </body>
 </html>

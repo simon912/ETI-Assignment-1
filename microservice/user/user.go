@@ -30,7 +30,7 @@ type Users struct {
 	CreationDate string         `json:"Account Creation Date"`
 }
 
-// Register REST endpoint
+// REST endpoint for User
 func main() {
 	router := mux.NewRouter()
 	corsOptions := cors.New(cors.Options{
@@ -39,20 +39,18 @@ func main() {
 	})
 	handler := corsOptions.Handler(router)
 
-	// Endpoint for User
-	//This GET method retrieves the relevant course information.
-	// For Login
+	// GET function for login
 	router.HandleFunc("/api/v1/login/{username}", GetUser).Methods("GET")
-	//test case: curl http://localhost:5000/api/v1/user/naruto55 -X POST -d "{\"User Group\":\"Car Owner\", \"First Name\":\"Naruto\", \"Last Name\":\"Uzumaki\", \"Mobile Number\":99987634, \"Email Address\":\"naruto@gmail.com\"}"
-	// For Register
+	// POST function for register
 	router.HandleFunc("/api/v1/register/{username}", CreateUser).Methods("POST")
+	// GET function for retrieval of user info
 	router.HandleFunc("/api/v1/user/{username}", GetUser).Methods("GET")
+	// PUT function for updating user
 	router.HandleFunc("/api/v1/updateuser/{username}", UpdateUser).Methods("PUT")
-	// test case: curl http://localhost:5000/api/v1/changecarowner/naruto55 -X PUT -d "{\"License Number\": 111123335, \"Plate Number\": \"ABC123\"}"
+	// PUT function for updating user's user group to Car Owner
 	router.HandleFunc("/api/v1/changecarowner/{username}", ChangeToCarOwner).Methods("PUT")
-	// For Deletion of User, which is called properly if its over 1 year old/365 days old
+	// DELETE function for Deletion of user, which is called only if the user is over 1 year old/365 days old
 	router.HandleFunc("/api/v1/delete/{username}", DeleteUser).Methods("DELETE")
-
 	fmt.Println("Listening at port 5000")
 	log.Fatal(http.ListenAndServe(":5000", handler))
 }
@@ -84,7 +82,7 @@ func (u *Users) UnmarshalJSON(data []byte) error {
 }
 
 // ----------------------------- Endpoint for User ----------------------------------------
-
+// Function to get that user's info
 func GetUser(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	username := params["username"]
@@ -103,7 +101,8 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 	}
 	defer result.Close()
 
-	found := false
+	userFound := false
+
 	for result.Next() {
 		var u Users
 		err = result.Scan(&u.Username, &u.Password, &u.Usergroup, &u.Firstname, &u.Lastname, &u.MobileNumber, &u.EmailAddr, &u.LicenseNo, &u.PlateNo, &u.CreationDate)
@@ -111,6 +110,7 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
 		response := struct {
 			Username     string `json:"Username"`
 			Password     string `json:"Password"`
@@ -132,15 +132,15 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 		// Convert the response to JSON and send it
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(response)
-
-		found = true
+		userFound = true
 	}
-	if !found {
-		fmt.Println("User doesn't exist")
-		http.Error(w, "User not found", http.StatusNotFound)
+	if !userFound {
+		http.Error(w, `{"error": "User does not exist"}`, http.StatusNotFound)
+		return
 	}
 }
 
+// Helper function to check if user exists in the table
 func userExists(username string) bool {
 	db, err := sql.Open("mysql", "user:password@tcp(127.0.0.1:3306)/carpoolingtrip")
 	if err != nil {

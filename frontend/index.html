@@ -56,7 +56,7 @@
       }
       function loginUser() {
         const username = document.getElementById("loginUsername").value;
-        const password = document.getElementById("loginPassword").value;
+        const enteredPassword = document.getElementById("loginPassword").value;
 
         // Send a GET request to /api/v1/login/{username} endpoint for authentication
         fetch("http://localhost:5000/api/v1/login/" + username, {
@@ -74,23 +74,33 @@
           })
           .then((data) => {
             // Check if the password from the response matches the entered password
-            if (data && data.Password === password) {
-              // Check user group and redirect accordingly
-              if (data["User Group"] === "Passenger") {
-                window.location.href =
-                  "passenger_home.html?username=" +
-                  encodeURIComponent(username);
-              } else if (data["User Group"] === "Car Owner") {
-                window.location.href =
-                  "carowner_home.html?username=" + encodeURIComponent(username);
+            if (data) {
+              // Check if the entered password matches the stored password
+              if (data.Password === enteredPassword) {
+                // Check user group and redirect accordingly
+                if (data["User Group"] === "Passenger") {
+                  window.location.href =
+                    "passenger_home.html?username=" +
+                    encodeURIComponent(username);
+                } else if (data["User Group"] === "Car Owner") {
+                  window.location.href =
+                    "carowner_home.html?username=" +
+                    encodeURIComponent(username);
+                } else {
+                  showMessage("Invalid user group");
+                }
               } else {
-                showMessage("Invalid user group");
+                showMessage(
+                  "Invalid password, please enter your password again."
+                );
               }
             }
           })
           .catch((error) => {
             // Display an error message or handle the error appropriately
-            showMessage("Login failed. Invalid username or password.");
+            showMessage(
+              "User does not exist, please register to use our service."
+            );
           });
       }
       function registerUser() {

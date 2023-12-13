@@ -201,6 +201,8 @@
         document.getElementById("confirmCancelTripContainer").style.display =
           "none";
         document.getElementById("tripList").style.display = "block";
+        document.getElementById("toggleChronologicalButton").style.display =
+          "block";
       }
       function getAllTrips() {
         var xhr = new XMLHttpRequest();
@@ -251,6 +253,7 @@
             "hh:mm A"
           );
           const formattedStartTime = startTravelingTime.format("h:mm A");
+          tripDiv.dataset.startTravelingTime = trip["Start Traveling Time"];
           listItem.innerHTML =
             "ID: " +
             trip["Trip ID"] +
@@ -303,6 +306,24 @@
             tripDiv.appendChild(cancelTripButton);
           }
           tripList.appendChild(tripDiv);
+        });
+      }
+      function toggleChronologicalView() {
+        // Get the current trip list
+        const tripList = document.getElementById("tripList");
+        const trips = Array.from(tripList.children);
+
+        // Sort trips based on start traveling time in reverse chronological order
+        trips.sort((a, b) => {
+          const timeA = moment(a.dataset.startTravelingTime, "hh:mm A");
+          const timeB = moment(b.dataset.startTravelingTime, "hh:mm A");
+          return timeB.diff(timeA);
+        });
+
+        // Clear and update the trip list with the new order
+        tripList.innerHTML = "";
+        trips.forEach((trip) => {
+          tripList.appendChild(trip);
         });
       }
       function showPublishContainer() {
@@ -394,6 +415,8 @@
         document.getElementById("confirmCancelTripContainer").style.display =
           "block";
         document.getElementById("tripList").style.display = "none";
+        document.getElementById("toggleChronologicalButton").style.display =
+          "none";
       }
       function cancelTrip() {
         const tripID = document.getElementById("tripIDspan").innerText;
@@ -468,6 +491,13 @@
       </div>
     </div>
     <div id="viewTripContainer">
+      <button
+        id="toggleChronologicalButton"
+        type="button"
+        onclick="toggleChronologicalView()"
+      >
+        View in Reverse Chronological Order
+      </button>
       <ul id="tripList"></ul>
       <div id="confirmCancelTripContainer">
         <span

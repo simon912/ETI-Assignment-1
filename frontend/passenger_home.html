@@ -203,7 +203,6 @@
           "block";
       }
       // Deletion of user
-      // Deletion of user
       function deleteUser(username) {
         fetch("http://localhost:5000/api/v1/delete/" + username, {
           method: "DELETE",
@@ -297,7 +296,7 @@
             "hh:mm A"
           );
           const formattedStartTime = startTravelingTime.format("h:mm A");
-
+          tripDiv.dataset.startTravelingTime = trip["Start Traveling Time"];
           listItem.innerHTML =
             "ID: " +
             trip["Trip ID"] +
@@ -341,6 +340,24 @@
         });
       }
 
+      function toggleChronologicalView() {
+        // Get the current trip list
+        const tripList = document.getElementById("tripList");
+        const trips = Array.from(tripList.children);
+
+        // Sort trips based on start traveling time in reverse chronological order
+        trips.sort((a, b) => {
+          const timeA = moment(a.dataset.startTravelingTime, "hh:mm A");
+          const timeB = moment(b.dataset.startTravelingTime, "hh:mm A");
+          return timeB.diff(timeA);
+        });
+
+        // Clear and update the trip list with the new order
+        tripList.innerHTML = "";
+        trips.forEach((trip) => {
+          tripList.appendChild(trip);
+        });
+      }
       function enrollTrip(tripID, username) {
         fetch(
           "http://localhost:5001/api/v1/enroll/" + tripID + "/" + username,
@@ -437,6 +454,9 @@
       </div>
     </div>
     <div id="viewTripContainer">
+      <button type="button" onclick="toggleChronologicalView()">
+        View in Reverse Chronological Order
+      </button>
       <ul id="tripList"></ul>
     </div>
     <div id="message"></div>

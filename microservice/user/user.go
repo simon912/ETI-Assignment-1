@@ -24,7 +24,6 @@ type Users struct {
 	Lastname     string `json:"Last Name"`
 	MobileNumber int    `json:"Mobile Number"`
 	EmailAddr    string `json:"Email Address"`
-	//This attribute will only be used if the User's User Group is Car Owner
 	LicenseNo    sql.NullInt64  `json:"License Number,omitempty"`
 	PlateNo      sql.NullString `json:"Plate Number,omitempty"`
 	CreationDate string         `json:"Account Creation Date"`
@@ -156,7 +155,7 @@ func userExists(username string) bool {
 	}
 	return count > 0
 }
-
+// Function to Create User, mainly used for Registration of User
 func CreateUser(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	username := params["username"]
@@ -190,6 +189,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "User %s has been registered!\n", username)
 }
 
+// Function to update the user's information (Email Address, Mobile Number)
 func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	username := params["username"]
@@ -227,11 +227,11 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "User %s has been updated!\n", username)
 }
 
+// Function to change the Passenger to Car Owner if they provide License Number and Plate Number of their car
 func ChangeToCarOwner(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	username := params["username"]
 	var updateUser Users
-	fmt.Println("Received JSON:", r.Body)
 	err := json.NewDecoder(r.Body).Decode(&updateUser)
 	if err != nil {
 		panic(err.Error())
@@ -265,7 +265,7 @@ func ChangeToCarOwner(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "User %s has been changed to Car Owner!\n", username)
 }
 
-// Deletion of User
+// Deletion of User only if the user is over 1 year old
 func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	username := vars["username"]

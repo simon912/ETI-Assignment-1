@@ -1,4 +1,4 @@
-// main.go - the backend
+// trip.go - the backend for trip management
 package main
 
 import (
@@ -33,7 +33,7 @@ type Enrollment struct {
 	TripID       int    `json:"Trip ID"`
 }
 
-// Register REST endpoint
+// REST endpoint for Trips
 func main() {
 	router := mux.NewRouter()
 	corsOptions := cors.New(cors.Options{
@@ -41,13 +41,11 @@ func main() {
 		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE"},
 	})
 	handler := corsOptions.Handler(router)
-	// Endpoint for Car-Pooling Trips
 	// To retrieve all trips for Passenger to View
 	router.HandleFunc("/api/v1/trips", GetAllTrip).Methods("GET")
 	// For Car Owner to publish trip
 	router.HandleFunc("/api/v1/publishtrip/{username}", PublishTrip).Methods("POST")
 	// For Car Owner to start trip
-	// curl http://localhost:5000/api/v1/starttrip/3 -X PUT -d "{\"Number of Passengers Left\": 1, \"Maximum Number of Passengers\": 2}"
 	router.HandleFunc("/api/v1/starttrip/{tripid}", StartTrip).Methods("PUT")
 	// For Passenger to enroll themselves into any trip
 	router.HandleFunc("/api/v1/enroll/{tripid}/{username}", EnrollUser).Methods("PUT")
@@ -66,7 +64,7 @@ func nullOrValue(value interface{}) interface{} {
 }
 
 // ----------------------------- Endpoint from User ----------------------------------------
-
+// Helper function to check if user exists in the table
 func userExists(username string) bool {
 	db, err := sql.Open("mysql", "user:password@tcp(127.0.0.1:3306)/carpoolingtrip")
 	if err != nil {
@@ -84,6 +82,7 @@ func userExists(username string) bool {
 }
 
 // ----------------------------- Endpoint for Car Pooling Trips ----------------------------------------
+// Function to retrieve all trip with the detail
 func GetAllTrip(w http.ResponseWriter, r *http.Request) {
 	//test case for retrieve all: curl -X GET http://localhost:5000/api/v1/trips
 	db, err := sql.Open("mysql", "user:password@tcp(127.0.0.1:3306)/carpoolingtrip")
@@ -127,6 +126,7 @@ func GetAllTrip(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(trips)
 }
 
+// Function for Passenger to enroll into a trip of their coice
 func EnrollUser(w http.ResponseWriter, r *http.Request) {
 	db, err := sql.Open("mysql", "user:password@tcp(127.0.0.1:3306)/carpoolingtrip")
 	// handle error
@@ -253,8 +253,6 @@ func updatePassengerNoLeft(tripID int, username string, trip Trips) {
 	}
 }
 
-// for Car Owner only
-
 // Custom unmarshal function for LicenseNo
 func (t *Trips) UnmarshalJSON(data []byte) error {
 	type Alias Trips
@@ -271,7 +269,7 @@ func (t *Trips) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// curl -X POST http://localhost:5000/api/v1/publishtrip/naruto55 -d "{\"Pick-Up Location\":\"Boon Lay Road\",\"Alternate Pick-Up Location\":\"\",\"Start Traveling Time\":\"2023-11-13T10:30:00Z\",\"Destination Location\":\"Bukit Timah Road\",\"Number of Passengers Allowed\":3}"
+// Function for Car Owner to publish trip
 func PublishTrip(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	username := params["username"]
@@ -294,7 +292,6 @@ func PublishTrip(w http.ResponseWriter, r *http.Request) {
 		panic(err.Error())
 	}
 	newTrip.StartTravelTime = parsedTime.Format("15:04:05")
-	// Set the Publisher field
 	newTrip.Publisher = username
 
 	// Insert the new trip into the Trips table
@@ -350,6 +347,7 @@ func isUserEnrolled(tripID int, username string) bool {
 	return count > 0
 }
 
+// Function to start a trip by changing the status from Pending to Active
 func StartTrip(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	tripID := params["tripid"]
@@ -399,6 +397,7 @@ func StartTrip(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Trip %s Status has been changed to Active\n", tripID)
 }
 
+// Function to cancel trip by deleting them from the Trip table only if it is within the 30 minutes cancellation window
 func CancelTrip(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	tripID := params["tripid"]
@@ -449,10 +448,7 @@ func CancelTrip(w http.ResponseWriter, r *http.Request) {
 	}
 	// Calculate the time difference
 	timeDifference := currentTime.Sub(startTime)
-
-	// Print the adjusted time difference in minutes
-	fmt.Println("Adjusted Time Difference:", timeDifference)
-
+	
 	// Check if the trip can be canceled (more than or equal to 30 minutes before the start time)
 	if timeDifference.Minutes() >= -30 && timeDifference.Minutes() <= 30 {
 		http.Error(w, `{"error": "Cancellation window is within 30 minutes"}`, http.StatusBadRequest)
@@ -496,6 +492,7 @@ func deleteTrip(w http.ResponseWriter, tripID int) {
 		return
 	}
 }
+
 // Helper function to delete enrollments for a trip
 func deleteEnrollmentsForTrip(tripID int) error {
     db, err := sql.Open("mysql", "user:password@tcp(127.0.0.1:3306)/carpoolingtrip")

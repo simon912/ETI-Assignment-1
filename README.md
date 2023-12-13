@@ -14,15 +14,19 @@ The frontend and backend are integrated through the use of REST APIs.
 The User Microservice is designed to handle operations that mainly involves the User (Passenger & Car Owner) such as:
 - Login of user
 - Registration of user
-- Updating user information
+- Updating user information (Mobile Number, Email Address)
+- Deletion of user if the user is over 1 year old or 365 days old
 - Changing the Passenger's User Group to Car Owner if they provide the License Number and Plate Number of their car
   
 #### Trip Microservice
 The Trip Microservice is designed to handle operations that involves managing the Car Pooling trips published by Car Owners such as:
 - Viewing trips that has been published by Car Owners
-- Enrolling into trips if there is vacancy in the trip
-- Viewing trips that has been published by Car Owners
-- Publishing trips with their own information such as Start Traveling Time, Pick-Up Location and Destination Location
+- Enrolling into trips if there is vacancy in the trip (only if the user is Passenger)
+- Publishing trips with their own information such as Start Traveling Time, Pick-Up Location and Destination Location (only if the user is Car Owner)
+- Starting or canceling the trip if the Car Owner published it
+
+### Other external tools or library
+- moment.js for displaying the Date and Time on frontend
 
 ### Architecture Diagram
 ![architecture_diagram-v2](https://github.com/simon912/ETI-Assignment-1/assets/93958709/4e89fd8e-c6f1-475a-afe0-469da707e88a)

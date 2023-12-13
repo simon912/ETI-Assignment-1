@@ -378,6 +378,7 @@
               alert(
                 "Trip ID " + tripID + "'s status has been changed to Active."
               );
+              location.reload();
             } else {
               throw new Error("Trip update failed");
             }

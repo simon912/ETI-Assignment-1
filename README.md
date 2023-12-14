@@ -27,6 +27,7 @@ The Trip Microservice is designed to handle operations that involves managing th
 
 ### Other external tools or library
 - moment.js for displaying the Date and Time on frontend
+- Bootstrap to enhance the frontend design
 
 ### Architecture Diagram
 ![architecture_diagram-v2](https://github.com/simon912/ETI-Assignment-1/assets/93958709/4e89fd8e-c6f1-475a-afe0-469da707e88a)

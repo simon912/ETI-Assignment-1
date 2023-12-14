@@ -1,7 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Jost:wght@100&display=swap');
-
 body {
   background-color: #aaf0ff;
+}
+#indexBody {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -41,7 +42,7 @@ h2 {
 }
 button {
   padding: 10px 20px;
-  background-color: #aaf0ff; /* Set your desired background color */
+  background-color: #aaf0ff;
   color: white;
   cursor: pointer;
 }
@@ -68,10 +69,10 @@ button {
 #loginFormContainer input[type='text'],
 #loginFormContainer input[type='password'] {
   border: none;
-  border-radius: 10px; /* Adjust the border-radius for the desired curvature */
-  padding: 10px; /* Adjust the padding as needed */
-  margin-bottom: 10px; /* Add margin between textboxes */
-  background-color: #e0e0e0; /* Set your desired background color */
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 10px;
+  background-color: #e0e0e0;
 }
 
 #loginFormContainer button {
@@ -88,10 +89,10 @@ button {
 #registerFormContainer input[type='password'],
 #registerFormContainer input[type='number'] {
   border: none;
-  border-radius: 10px; /* Adjust the border-radius for the desired curvature */
-  padding: 10px; /* Adjust the padding as needed */
-  margin-bottom: 10px; /* Add margin between textboxes */
-  background-color: #e0e0e0; /* Set your desired background color */
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 10px;
+  background-color: #e0e0e0;
 }
 
 #registerFormContainer button {
@@ -104,7 +105,7 @@ button {
   cursor: pointer;
 }
 
-body::after {
+#indexBody::after {
   content: '';
   background-image: url('images/index-background.jpg');
   background-size: cover;
@@ -117,4 +118,252 @@ body::after {
   width: 100%;
   height: 100vh;
   z-index: -1;
+}
+#userButtonList {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+#userButtonList button {
+  margin: 0 10px; /* Add margin between buttons for spacing */
+  border-radius: 10px;
+  color: black;
+  background-color: white;
+  border: none;
+  font-weight: bold;
+}
+
+h1 {
+  margin-top: 20px; /* Add margin to move h1 up */
+}
+
+h2 {
+  margin-top: 10px; /* Add margin to move h2 up */
+}
+
+#viewProfileContainer,
+#viewTripContainer {
+  margin-top: 20px; /* Adjust the margin to move these containers up */
+}
+
+.dropdown {
+  display: inline-block;
+  position: relative;
+}
+
+.dropbtn {
+  background-color: #aaf0ff;
+  color: white;
+  padding: 15px 20px;
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: #f9f9f9;
+  width: 130px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  z-index: 1;
+  right: 50%;
+  top: 40px;
+  transform: translateX(50%);
+}
+
+.dropdown-content a {
+  color: black;
+  padding: 12px 16px;
+  display: block;
+  text-decoration: none;
+}
+
+.dropdown-content a:hover {
+  background-color: #aaf0ff;
+  color: white;
+}
+
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+
+#viewProfileContainer {
+  background-color: white;
+  border-radius: 10px;
+  padding: 20px;
+  margin: 60px auto;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 800px;
+  min-height: 400px;
+  position: relative;
+}
+
+#changeCarOwnerContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%; /* Set the width to 100% to ensure it takes the full width of the parent */
+  max-width: 500px; /* Adjust the max-width as needed */
+  margin: 0 auto; /* Center horizontally using auto margin */
+  padding: 20px; /* Add padding as needed */
+}
+
+#changeCarOwnerForm {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+#changeCarOwnerForm h3 {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+#changeCarOwnerContainer input[type='text'],
+#changeCarOwnerContainer input[type='number'] {
+  border: none;
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 10px;
+  background-color: #e0e0e0;
+}
+
+#carownerLicenseNo,
+#carownerCarPlateNo {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+}
+
+#changeCarOwnerForm button {
+  width: 100%;
+  padding: 10px;
+  background-color: #aaf0ff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+#updateUserContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+#updateUserForm {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+#updateUserForm h3 {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+#updateUserContainer input[type='text'],
+#updateUserContainer input[type='number'] {
+  border: none;
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 10px;
+  background-color: #e0e0e0;
+}
+
+#updateUsername,
+#updateMobileNo,
+#updateEmailAddr {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+}
+
+#updateUserForm button {
+  width: 100%;
+  padding: 10px;
+  background-color: #aaf0ff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+#confirmDeleteContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+#confirmDeleteContainer button {
+  width: 100%;
+  padding: 10px;
+  background-color: #aaf0ff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+#confirmDeleteContainer h3 {
+  text-align: center;
+  margin-bottom: 100px;
+}
+
+#tripList {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.trip-item {
+  width: calc(33.33% - 10px); /* Adjust the width as needed with some margin */
+  margin: 5px;
+  box-sizing: border-box;
+  border: 1px solid black; /* Add black border */
+  padding: 10px; /* Add padding for better visibility */
+  border-radius: 15px;
+  background-color: white;
+}
+
+/* Add additional styles for the card body if needed */
+.card-body {
+  padding: 10px;
+  background-color: #aaf0ff;
+}
+#toggleChronologicalButton {
+  width: 100%;
+  padding: 10px;
+  background-color: white;
+  color: black;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.trip-item button {
+  border-radius: 15px;
+  font-weight: bold;
+  border: none;
 }

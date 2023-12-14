@@ -29,6 +29,12 @@
         }, 3000)
       }
       function showLoginForm() {
+        //change button color
+        document.getElementById('loginButton').style.backgroundColor = '#aaf0ff'
+        document.getElementById('loginButton').style.color = '#ffffff'
+        document.getElementById('registerButton').style.backgroundColor = '#ffffff'
+        document.getElementById('registerButton').style.color = '#000000'
+        //display container
         document.getElementById('loginFormContainer').style.display = 'block'
         document.getElementById('registerFormContainer').style.display = 'none'
         document.getElementById('message').style.display = 'none'
@@ -39,6 +45,12 @@
       }
 
       function showRegisterForm() {
+        //change button color
+        document.getElementById('loginButton').style.backgroundColor = '#ffffff'
+        document.getElementById('loginButton').style.color = '#000000'
+        document.getElementById('registerButton').style.backgroundColor = '#aaf0ff'
+        document.getElementById('registerButton').style.color = '#ffffff'
+        //display container
         document.getElementById('loginFormContainer').style.display = 'none'
         document.getElementById('registerFormContainer').style.display = 'block'
         document.getElementById('message').style.display = 'none'

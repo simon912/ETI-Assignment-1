@@ -263,11 +263,8 @@
         trips.forEach((trip, index) => {
           const tripDiv = document.createElement('div')
           tripDiv.classList.add('trip-item')
-
           const listItem = document.createElement('p')
-
           const alternatePickUpLocation = trip['Alternate Pick-Up Location'] ? trip['Alternate Pick-Up Location']['String'] : ''
-
           const startTravelingTime = moment(trip['Start Traveling Time'], 'hh:mm A')
           const formattedStartTime = startTravelingTime.format('h:mm A')
           tripDiv.dataset.startTravelingTime = trip['Start Traveling Time']
@@ -361,7 +358,7 @@
     </h2>
     <div id="userButtonList">
       <div class="dropdown">
-        <button type="dropbtn">View Profile</button>
+        <button type="button">View Profile</button>
         <div class="dropdown-content">
           <a href="#" onclick="showChangeCarOwner()">Change to Car Owner</a>
           <a href="#" onclick="showUserInfo()">Update Profile</a>
@@ -414,6 +411,7 @@
         </div>
       </div>
     </div>
+
     <div id="message"></div>
   </body>
 </html>

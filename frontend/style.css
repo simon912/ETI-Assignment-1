@@ -26,6 +26,7 @@ h2 {
   border: none;
   outline: none;
   padding: 15px 40px;
+  font-weight: bold;
 }
 #loginButton {
   background-color: #aaf0ff;
@@ -33,6 +34,7 @@ h2 {
   border: none;
   outline: none;
   padding: 15px 40px;
+  font-weight: bold;
 }
 #indexButtonList {
   position: absolute;
@@ -135,16 +137,22 @@ button {
 }
 
 h1 {
-  margin-top: 20px; /* Add margin to move h1 up */
+  margin-top: 20px;
 }
 
 h2 {
-  margin-top: 10px; /* Add margin to move h2 up */
+  margin-top: 10px;
 }
 
 #viewProfileContainer,
 #viewTripContainer {
-  margin-top: 20px; /* Adjust the margin to move these containers up */
+  margin-top: 20px;
+  display: flex;
+  flex-wrap: wrap;
+}
+#viewTripContainer,
+#toggleChronologicalButton {
+  margin-bottom: 20px;
 }
 
 .dropdown {
@@ -209,10 +217,10 @@ h2 {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 100%; /* Set the width to 100% to ensure it takes the full width of the parent */
-  max-width: 500px; /* Adjust the max-width as needed */
-  margin: 0 auto; /* Center horizontally using auto margin */
-  padding: 20px; /* Add padding as needed */
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 20px;
 }
 
 #changeCarOwnerForm {
@@ -254,48 +262,35 @@ h2 {
   cursor: pointer;
 }
 
-#updateUserContainer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  max-width: 500px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
 #updateUserForm {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
+  width: 300px; /* Adjust the width as needed */
+  margin: auto;
+  box-sizing: border-box;
 }
 
 #updateUserForm h3 {
   text-align: center;
-  margin-bottom: 50px;
+}
+#updateUserForm label,
+#updateUserForm input,
+#updateUserForm button {
+  display: block;
+  box-sizing: border-box;
+  margin-bottom: 10px;
 }
 
 #updateUserContainer input[type='text'],
 #updateUserContainer input[type='number'] {
   border: none;
   border-radius: 10px;
-  padding: 10px;
-  margin-bottom: 10px;
   background-color: #e0e0e0;
-}
-
-#updateUsername,
-#updateMobileNo,
-#updateEmailAddr {
   width: 100%;
   padding: 10px;
-  margin-bottom: 10px;
   box-sizing: border-box;
 }
 
 #updateUserForm button {
+  margin-top: 15px;
   width: 100%;
   padding: 10px;
   background-color: #aaf0ff;
@@ -334,23 +329,31 @@ h2 {
 #tripList {
   display: flex;
   flex-wrap: wrap;
+  padding: 0;
 }
 
 .trip-item {
-  width: calc(33.33% - 10px); /* Adjust the width as needed with some margin */
-  margin: 5px;
+  display: inline-block;
+  width: calc(33.33% - 2 * 10px);
+  margin: 10px;
   box-sizing: border-box;
-  border: 1px solid black; /* Add black border */
-  padding: 10px; /* Add padding for better visibility */
+  padding: 10px;
   border-radius: 15px;
   background-color: white;
 }
 
-/* Add additional styles for the card body if needed */
+.card {
+  margin: 0 auto;
+  max-width: 1500px;
+  border: none;
+}
 .card-body {
+  margin: 0;
+  height: 100%;
   padding: 10px;
   background-color: #aaf0ff;
 }
+
 #toggleChronologicalButton {
   width: 100%;
   padding: 10px;
@@ -360,10 +363,61 @@ h2 {
   border-radius: 5px;
   cursor: pointer;
   font-weight: bold;
+  margin: 15px 0;
 }
 
 .trip-item button {
   border-radius: 15px;
   font-weight: bold;
   border: none;
+}
+
+#publishTripContainer {
+  background-color: white;
+  border-radius: 10px;
+  padding: 20px;
+  margin: 60px auto;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 800px;
+  min-height: 400px;
+  position: relative;
+}
+
+#publishTripForm {
+  width: 300px; /* Adjust the width as needed */
+  margin: auto;
+}
+
+#publishTripForm label,
+#publishTripForm input,
+#publishTripForm button {
+  margin-bottom: 10px;
+}
+#publishTripForm h3 {
+  text-align: center;
+  margin-bottom: 50px;
+}
+#publishTripContainer input {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 10px;
+  width: 100%;
+  margin-bottom: 10px;
+  background-color: #e0e0e0;
+}
+
+#publishTripContainer button {
+  margin-top: 15px;
+  width: 100%;
+  padding: 10px;
+  background-color: #aaf0ff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
 }

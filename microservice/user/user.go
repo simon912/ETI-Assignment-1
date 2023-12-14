@@ -161,7 +161,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	username := params["username"]
 
 	if userExists(username) {
-		http.Error(w, "Username already in use", http.StatusConflict)
+		http.Error(w, `{"error": "Username already in use`, http.StatusConflict)
 		return
 	}
 

@@ -14,20 +14,8 @@
       #registerFormContainer {
         display: none;
       }
-      #message {
-        display: none;
-      }
     </style>
     <script>
-      function showMessage(message) {
-        const messageContainer = document.getElementById('message')
-        messageContainer.innerHTML = message
-        messageContainer.style.display = 'block'
-
-        setTimeout(() => {
-          messageContainer.style.display = 'none'
-        }, 3000)
-      }
       function showLoginForm() {
         //change button color
         document.getElementById('loginButton').style.backgroundColor = '#aaf0ff'
@@ -37,7 +25,6 @@
         //display container
         document.getElementById('loginFormContainer').style.display = 'block'
         document.getElementById('registerFormContainer').style.display = 'none'
-        document.getElementById('message').style.display = 'none'
         //reset the form field
         document.getElementById('loginUsername').value = ''
         document.getElementById('loginPassword').value = ''
@@ -53,7 +40,6 @@
         //display container
         document.getElementById('loginFormContainer').style.display = 'none'
         document.getElementById('registerFormContainer').style.display = 'block'
-        document.getElementById('message').style.display = 'none'
         //reset the form field
         document.getElementById('registerUsername').value = ''
         document.getElementById('registerPassword').value = ''
@@ -92,16 +78,16 @@
                 } else if (data['User Group'] === 'Car Owner') {
                   window.location.href = 'carowner_home.html?username=' + encodeURIComponent(username)
                 } else {
-                  showMessage('Invalid user group')
+                  alert('Invalid user group')
                 }
               } else {
-                showMessage('Invalid password, please enter your password again.')
+                alert('Invalid password, please enter your password again.')
               }
             }
           })
           .catch((error) => {
             // Display an error message or handle the error appropriately
-            showMessage('User does not exist, please register to use our service.')
+            alert('User does not exist, please register to use our service.')
           })
       }
       function registerUser() {
@@ -112,6 +98,9 @@
         const lastname = document.getElementById('registerLastname').value
         const mobileNumber = document.getElementById('registerMobilenumber').value
         const email = document.getElementById('registerEmail').value
+        if (username == '' || password == '' || firstname == '' || lastname == '' || mobileNumber == '' || email == '') {
+          alert('Please enter all the field!')
+        }
         // Send a POST request to /api/v1/register/{username} endpoint for creation of account
         fetch('http://localhost:5000/api/v1/register/' + username, {
           method: 'POST',
@@ -129,18 +118,19 @@
         })
           .then((response) => {
             if (response.ok) {
-              return response.text()
+              // Successful registration
+              alert('Register successful, you can log in now')
+            } else if (response.status === 409) {
+              // Username conflict
+              alert('Username already in use, please try another username')
             } else {
+              // Handle other errors
               throw new Error('Registration failed')
             }
           })
-          .then((data) => {
-            // Display a success message or redirect to another page if needed
-            showMessage('Register successful')
-          })
           .catch((error) => {
-            // Display an error message or handle the error appropriately
-            showMessage('Registration failed. Username may already be in use.')
+            // Handle other errors
+            alert('An error occurred during registration of user.')
           })
       }
     </script>
@@ -184,7 +174,6 @@
           <button type="button" onclick="registerUser()">Register</button>
         </form>
       </div>
-      <div id="message"></div>
     </div>
   </body>
 </html>

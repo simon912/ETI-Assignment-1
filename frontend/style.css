@@ -11,6 +11,12 @@ body {
   margin-top: 120px;
 }
 
+#messageContainer {
+  position: absolute;
+  top: 380px;
+  right: 75px;
+}
+
 h1,
 h2 {
   text-align: center;

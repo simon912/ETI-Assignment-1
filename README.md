@@ -2,14 +2,46 @@
 
 ### Instruction for setting up and running the microservices
 1. Run the MySQL Script for the Creation of Database and Table as well as Insertion of Records
-2. Run the two microservices (user.go & trip.go)
-3. Open index.html
+
+[ETI-Assignment1-SQLQuery.sql](ETI-Assignment1-SQLQuery.sql)
+
+2. Install the following Go packages
+```
+go get github.com/go-sql-driver/mysql
+```
+```
+go get github.com/gorilla/mux
+```
+```
+go get github.com/rs/cors
+```
+3. Run the two microservices (user.go & trip.go) by entering the following command in the command prompt in the project folder's terminal
+```
+cd microservice/trip
+```
+```
+go run trip.go
+```
+```
+cd microservice/user
+```
+```
+go run user.go
+```
+5. Open index.html
 
 ### Design Considerations
 The backend is split into two Microservices that do separate functions. Each Microservice has their own role and responsbility to fulfill while being linked to each other.
 As for the frontend, it is done through the use of HTML CSS Javascript to display the relevant information as well as make use of several HTTP method such as GET, POST, PUT & DELETE.
 The frontend and backend are integrated through the use of REST APIs.
 
+### Assumption
+* No Limit to Trip Vacancy
+  * Car Owner can publish a trip with no limit to the vacancy as they themselves would know the vacancy of their vehicle
+* Trip Status
+  * Trip Status will be set to Pending after its published so that Passengers can enroll before the Trip is set to Active by the Car Owner
+* Update User Information
+  * Only Mobile Number and Phone Number can be updated by the user 
 ### User Microservice 🧍
 The **User Microservice** is designed to handle operations that mainly involves the User (Passenger & Car Owner).
 The following operations as well as the condition for them to work are:
@@ -17,7 +49,7 @@ The following operations as well as the condition for them to work are:
   * If the user provides the correct username and password 
 * **Registration of User**
   * If the username of their choice is not taken
-* **Updating User Information** (Only Mobile Number & Email Address can be updated)
+* **Updating User Information** 
 * **Deletion of User**
   * If the user is over 1 year old or 365 days old
   * If the user has not enrolled into a trip

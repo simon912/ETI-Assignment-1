@@ -5,12 +5,12 @@
 2. Run the two microservices (user.go & trip.go)
 3. Open index.html
 
-### Design Considerations/Microservices
+### Design Considerations
 The backend is split into two Microservices that do separate functions. Each Microservice has their own role and responsbility to fulfill while being linked to each other.
 As for the frontend, it is done through the use of HTML CSS Javascript to display the relevant information as well as make use of several HTTP method such as GET, POST, PUT & DELETE.
 The frontend and backend are integrated through the use of REST APIs.
 
-#### User Microservice
+### User Microservice 🧍
 The **User Microservice** is designed to handle operations that mainly involves the User (Passenger & Car Owner).
 The following operations as well as the condition for them to work are:
 * **Login of User**
@@ -25,7 +25,7 @@ The following operations as well as the condition for them to work are:
 * **Changing the Passenger's User Group to Car Owner** if they provide the License Number and Plate Number of their car
   * If the user has not enrolled into a trip 
   
-#### Trip Microservice
+### Trip Microservice 🚗
 The **Trip Microservice** is designed to handle operations that involves managing the Car Pooling trips published by Car Owners.
 The following operations as well as the condition for them to work are:
 * **Viewing Trips** that has been published by Car Owners 

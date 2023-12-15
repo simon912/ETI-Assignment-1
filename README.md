@@ -28,7 +28,7 @@ cd microservice/user
 ```
 go run user.go
 ```
-5. Open index.html
+4. Open index.html
 
 ### Design Considerations
 The backend is split into two Microservices that do separate functions. Each Microservice has their own role and responsbility to fulfill while being linked to each other.
@@ -41,7 +41,11 @@ The frontend and backend are integrated through the use of REST APIs.
 * Trip Status
   * Trip Status will be set to Pending after its published so that Passengers can enroll before the Trip is set to Active by the Car Owner
 * Update User Information
-  * Only Mobile Number and Phone Number can be updated by the user 
+  * Only Mobile Number and Phone Number can be updated by the user
+* No Switching Back to Passenger
+  * Car Owner cannot go back to being Passenger
+* Deletion of User & Foreign Constraint
+  * Due to Foreign Constraint, if the user is already enrolled into a trip or has published a trip, they cannot delete their user even if they are over a year old 
 ### User Microservice 🧍
 The **User Microservice** is designed to handle operations that mainly involves the User (Passenger & Car Owner).
 The following operations as well as the condition for them to work are:

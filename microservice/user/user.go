@@ -1,4 +1,4 @@
-// user.go - the backend for user management
+// user.go - the backend for user management, port 5000
 package main
 
 import (

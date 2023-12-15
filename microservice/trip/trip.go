@@ -1,4 +1,4 @@
-// trip.go - the backend for trip management
+// trip.go - the backend for trip management, port 5001
 package main
 
 import (
@@ -23,7 +23,7 @@ type Trips struct {
 	DestinationLocation string         `json:"Destination Location"`
 	PassengerNoLeft     int            `json:"Number of Passengers Left"`
 	MaxPassengerNo      int            `json:"Maximum Number of Passengers"`
-	Status              string         `json:"Status"` // pending or active
+	Status              string         `json:"Status"` // Pending or Active
 	Publisher           string         `json:"Publisher"`
 }
 
@@ -55,13 +55,6 @@ func main() {
 	log.Fatal(http.ListenAndServe(":5001", handler))
 }
 
-// Helper function to handle NULL values in SQL parameters
-func nullOrValue(value interface{}) interface{} {
-	if value == nil {
-		return nil
-	}
-	return value
-}
 
 // ----------------------------- Endpoint from User ----------------------------------------
 // Helper function to check if user exists in the table
@@ -113,10 +106,8 @@ func GetAllTrip(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-
 		// Convert the time to UTC
 		parsedTime = parsedTime.UTC()
-
 		// Format the time as 12-hour format with AM/PM
 		formattedTime := parsedTime.Format("03:04 PM")
 		t.StartTravelTime = formattedTime
@@ -230,7 +221,6 @@ func getTripByID(tripID int) (Trips, bool) {
 		fmt.Printf("Error querying database: %v\n", err)
 		return Trips{}, false
 	}
-
 	return t, true
 }
 
@@ -278,7 +268,6 @@ func PublishTrip(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "User not found", http.StatusNotFound)
 		return
 	}
-
 	// Decode the JSON request into a new trip
 	var newTrip Trips
 	err := json.NewDecoder(r.Body).Decode(&newTrip)
@@ -304,7 +293,7 @@ func PublishTrip(w http.ResponseWriter, r *http.Request) {
 
 	// Insert the new trip and auto-increment the ID
 	query := "INSERT INTO Trips (PickUpLocation, AltPickUpLocation, StartTravelTime, DestinationLocation, PassengerNoLeft, MaxPassengerNo, Status, Publisher) VALUES (?, ?, STR_TO_DATE(?, '%H:%i:%s'), ?, ?, ?, ?, ?)"
-	result, err := db.Exec(query, newTrip.PickUpLocation, nullOrValue(newTrip.AltPickUpLocation), newTrip.StartTravelTime, newTrip.DestinationLocation, newTrip.PassengerNoLeft, newTrip.MaxPassengerNo, "Pending", newTrip.Publisher)
+	result, err := db.Exec(query, newTrip.PickUpLocation, newTrip.AltPickUpLocation, newTrip.StartTravelTime, newTrip.DestinationLocation, newTrip.PassengerNoLeft, newTrip.MaxPassengerNo, "Pending", newTrip.Publisher)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		panic(err.Error())

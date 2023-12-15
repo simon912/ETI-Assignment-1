@@ -134,7 +134,7 @@ button {
 }
 
 #userButtonList button {
-  margin: 0 10px; /* Add margin between buttons for spacing */
+  margin: 0 10px;
   border-radius: 10px;
   color: black;
   background-color: white;
@@ -269,7 +269,7 @@ h2 {
 }
 
 #updateUserForm {
-  width: 300px; /* Adjust the width as needed */
+  width: 300px;
   margin: auto;
   box-sizing: border-box;
 }
@@ -397,7 +397,7 @@ h2 {
 }
 
 #publishTripForm {
-  width: 300px; /* Adjust the width as needed */
+  width: 300px;
   margin: auto;
 }
 

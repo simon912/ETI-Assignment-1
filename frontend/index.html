@@ -16,6 +16,7 @@
       }
     </style>
     <script>
+      // display the login form
       function showLoginForm() {
         //change button color
         document.getElementById('loginButton').style.backgroundColor = '#aaf0ff'
@@ -30,7 +31,7 @@
         document.getElementById('loginPassword').value = ''
         document.getElementById('loginForm').style.display = 'block'
       }
-
+      // display the register form
       function showRegisterForm() {
         //change button color
         document.getElementById('loginButton').style.backgroundColor = '#ffffff'
@@ -49,6 +50,9 @@
         document.getElementById('registerEmail').value = ''
         document.getElementById('registerForm').style.display = 'block'
       }
+      // function to handle user login
+      // retrieves username and password from the login form and sends a GET request to the backend for authentication
+      // successful login redirects the user depending on what their user group is (passenger, car owner)
       function loginUser() {
         const username = document.getElementById('loginUsername').value
         const enteredPassword = document.getElementById('loginPassword').value
@@ -90,6 +94,8 @@
             alert('User does not exist, please register to use our service.')
           })
       }
+      // function to handle registration of user
+      // retrieves values from the registration form, validates the input and sends a POST request to the backend for creation of user
       function registerUser() {
         // Get values from the registration form
         const username = document.getElementById('registerUsername').value
@@ -135,7 +141,6 @@
       }
     </script>
   </head>
-
   <body id="indexBody">
     <h1>Welcome to the Car Pooling Trip Platform!</h1>
     <h2>

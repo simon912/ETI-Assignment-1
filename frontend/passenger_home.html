@@ -24,6 +24,9 @@
       window.onload = function () {
         retrieveUserData()
       }
+      // function to retrieve and display user data
+      // sends a GET request to the backend for fetching user details based on username
+      // updates DOM with user information upon successful retrieval
       function retrieveUserData() {
         // Send a GET request to /api/v1/user/{username} endpoint for user data
         fetch('http://localhost:5000/api/v1/user/' + username, {
@@ -59,7 +62,9 @@
             alert('Failed to retrieve user data.')
           })
       }
-      // For Profile
+      // function to retrieve and display user information (user group, first name, last name, mobile number and email address)
+      // sends a GET request to the backend for user data based on the username
+      // updates the DOM with user details and displays the user profile
       function showUserInfo() {
         // Send a GET request to /api/v1/user/{username} endpoint for user data
         fetch('http://localhost:5000/api/v1/user/' + username, {
@@ -98,6 +103,7 @@
         document.getElementById('viewTripContainer').style.display = 'none'
         document.getElementById('viewProfileContainer').style.display = 'block'
       }
+      // function to display the container for change car owner form
       function showChangeCarOwner() {
         document.getElementById('viewProfileContainer').style.display = 'block'
         document.getElementById('viewTripContainer').style.display = 'none'
@@ -110,6 +116,10 @@
         document.getElementById('carownerCarPlateNo').value = ''
         document.getElementById('changeCarOwnerForm').style.display = 'block'
       }
+      // function to update user information
+      // send PUT request to the backend for updating user details based on given username
+      // displays alert upon successful update
+      // logs an error if the update fails
       function updateUserInfo(username) {
         const mobilenumber = parseInt(document.getElementById('updateMobileNo').value)
         const emailaddr = document.getElementById('updateEmailAddr').value
@@ -135,6 +145,10 @@
             console.error('Error updating user:', error.message)
           })
       }
+      // function to change the passenger to car owner
+      // sends PUT request to backend for updating the user's user group to Car Owner
+      // displays successful alert upon successful user group update before refreshing the page or
+      // displays error alert the user is already enrolled in a trip or if update fails
       function changeCarOwner(username) {
         const licenseno = parseInt(document.getElementById('carownerLicenseNo').value)
         const plateno = document.getElementById('carownerCarPlateNo').value
@@ -154,7 +168,7 @@
         })
           .then((response) => {
             if (response.ok) {
-              alert('User ' + username + ' changed to Car Owner. You will be logged out immediately.')
+              alert('User ' + username + ' changed to Car Owner. You will be logged out immediately')
               window.location.href = 'index.html'
             } else {
               return response.json()
@@ -173,7 +187,7 @@
             alert('Error in updating user group')
           })
       }
-      // Confirmation message for deleting user
+      // show confirmation container for deletion of user
       function showDeleteConfirmation() {
         document.getElementById('viewProfileContainer').style.display = 'block'
         document.getElementById('changeCarOwnerContainer').style.display = 'none'
@@ -181,7 +195,10 @@
         document.getElementById('confirmDeleteContainer').style.display = 'block'
         document.getElementById('viewTripContainer').style.display = 'none'
       }
-      // Deletion of user
+      // function to delete a user
+      // sends DELETE request to backend to delete the user based on given username
+      // displays successful alert upon successful deletion
+      // displays error alert if the user is not over 1 year old, if the user already enrolls in a trip or if the user already publish a trip
       function deleteUser(username) {
         fetch('http://localhost:5000/api/v1/delete/' + username, {
           method: 'DELETE',
@@ -207,7 +224,7 @@
               } else if (data.error.includes('User is enrolled in a Trip')) {
                 alert('Delete Error: User is already enrolled in a Trip')
               } else {
-                alert('An error occurred during user deletion.')
+                alert('An error occurred during user deletion')
               }
             }
           })
@@ -216,13 +233,17 @@
           })
       }
 
-      // For Trip
+      // function to show the trip container
       function showTripsContainer() {
         getAllTrips()
         document.getElementById('viewProfileContainer').style.display = 'none'
         document.getElementById('viewTripContainer').style.display = 'block'
         document.getElementById('confirmDeleteContainer').style.display = 'none'
       }
+      // function to retrieve all trips detail
+      // sends GET request to the server to retrieve a list of trips
+      // updates trip list in DOM upon successful retrieval
+      // handles various error cases
       function getAllTrips() {
         var xhr = new XMLHttpRequest()
         xhr.open('GET', 'http://localhost:5001/api/v1/trips', true)
@@ -253,7 +274,8 @@
         }
         xhr.send()
       }
-
+      // function to update trip list in DOM
+      // take array of trip objects and creates html elements for each trip and appends them to the trip list container
       function updateTripList(trips) {
         const tripListContainer = document.getElementById('tripList')
         tripListContainer.innerHTML = ''
@@ -288,7 +310,7 @@
           }
         })
       }
-
+      // function to change the order of trip list to reverse chronological according to the start traveling time
       function toggleChronologicalView() {
         // Get the current trip list
         const tripList = document.getElementById('tripList')
@@ -307,6 +329,10 @@
           tripList.appendChild(trip)
         })
       }
+      // function to enroll user into a trip
+      // sends PUT request to backend to enroll the user in the specified trip
+      // displays successful alert if the user successfuly enrolled into a trip before refreshing the page
+      // displays error alert if the user already enrolled in the trip, if the trip is full or if the trip is active
       function enrollTrip(tripID, username) {
         fetch('http://localhost:5001/api/v1/enroll/' + tripID + '/' + username, {
           method: 'PUT',
@@ -316,7 +342,7 @@
         })
           .then((response) => {
             if (response.ok) {
-              // Handle success, e.g., show a success message
+              // Handle success
               alert('Enrolled successfully in Trip ID ' + tripID)
               location.reload()
             } else {
@@ -328,20 +354,20 @@
             if (data && data.error) {
               // Display specific error messages based on the server response
               if (data.error.includes('User is already enrolled in this trip')) {
-                alert('You have already enrolled in this trip.')
+                alert('You have already enrolled in this trip')
               } else if (data.error.includes('Trip is already full')) {
-                alert('The trip is already full.')
-              } else if (data.error.includes('Trip is not active')) {
-                alert('The trip is not active.')
+                alert('The trip is already full')
+              } else if (data.error.includes('Trip is Active')) {
+                alert('The trip is already active')
               } else {
-                alert('Failed to enroll in the trip.')
+                alert('Failed to enroll in the trip')
               }
             }
           })
           .catch((error) => {
             // Handle network errors or other issues
             console.error('Error enrolling in trip:', error.message)
-            alert('Failed to enroll in the trip. The trip may be full or Active.')
+            alert('Failed to enroll in the trip. The trip may be full or Active')
           })
       }
     </script>

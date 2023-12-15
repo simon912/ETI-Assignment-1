@@ -24,6 +24,9 @@
       window.onload = function () {
         retrieveUserData()
       }
+      // function to retrieve and display user data
+      // sends a GET request to the backend for fetching user details based on username
+      // updates DOM with user information upon successful retrieval
       function retrieveUserData() {
         // Send a GET request to /api/v1/user/{username} endpoint for user data
         fetch('http://localhost:5000/api/v1/user/' + username, {
@@ -59,7 +62,9 @@
             alert('Failed to retrieve user data.')
           })
       }
-      // For Profile
+      // function to retrieve and display user information (user group, first name, last name, mobile number and email address)
+      // sends a GET request to the backend for user data based on the username
+      // updates the DOM with user details and displays the user profile
       function showUserInfo() {
         // Send a GET request to /api/v1/user/{username} endpoint for user data
         fetch('http://localhost:5000/api/v1/user/' + username, {
@@ -100,6 +105,10 @@
         document.getElementById('viewProfileContainer').style.display = 'block'
         document.getElementById('publishTripContainer').style.display = 'none'
       }
+      // function to update user information
+      // send PUT request to the backend for updating user details based on given username
+      // displays alert upon successful update
+      // logs an error if the update fails
       function updateUserInfo(username) {
         const mobilenumber = parseInt(document.getElementById('updateMobileNo').value)
         const emailaddr = document.getElementById('updateEmailAddr').value
@@ -125,6 +134,7 @@
             console.error('Error updating user:', error.message)
           })
       }
+      // show confirmation container for deletion of user
       function showDeleteConfirmation() {
         document.getElementById('viewProfileContainer').style.display = 'block'
         document.getElementById('updateUserContainer').style.display = 'none'
@@ -132,6 +142,10 @@
         document.getElementById('viewTripContainer').style.display = 'none'
         document.getElementById('publishTripContainer').style.display = 'none'
       }
+      // function to delete a user
+      // sends DELETE request to backend to delete the user based on given username
+      // displays successful alert upon successful deletion
+      // displays error alert if the user is not over 1 year old, if the user already enrolls in a trip or if the user already publish a trip
       function deleteUser(username) {
         fetch('http://localhost:5000/api/v1/delete/' + username, {
           method: 'DELETE',
@@ -166,7 +180,7 @@
           })
       }
 
-      // For Trip
+      // function to show the trip container
       function showTripsContainer() {
         getAllTrips()
         document.getElementById('viewProfileContainer').style.display = 'none'
@@ -175,6 +189,10 @@
         document.getElementById('tripList').style.display = 'block'
         document.getElementById('toggleChronologicalButton').style.display = 'block'
       }
+      // function to retrieve all trips detail
+      // sends GET request to the server to retrieve a list of trips
+      // updates trip list in DOM upon successful retrieval
+      // handles various error cases
       function getAllTrips() {
         var xhr = new XMLHttpRequest()
         xhr.open('GET', 'http://localhost:5001/api/v1/trips', true)
@@ -205,7 +223,8 @@
         }
         xhr.send()
       }
-
+      // function to update trip list in DOM
+      // take array of trip objects and creates html elements for each trip and appends them to the trip list container
       function updateTripList(trips) {
         const tripListContainer = document.getElementById('tripList')
         tripListContainer.innerHTML = ''
@@ -244,12 +263,14 @@
             tripDiv.appendChild(cancelTripButton)
           }
           tripListContainer.appendChild(tripDiv)
+
           // Add a line break after every 3 trips
           if ((index + 1) % 3 === 0) {
             tripListContainer.appendChild(document.createElement('br'))
           }
         })
       }
+      // function to change the order of trip list to reverse chronological according to the start traveling time
       function toggleChronologicalView() {
         // Get the current trip list
         const tripList = document.getElementById('tripList')
@@ -268,12 +289,16 @@
           tripList.appendChild(trip)
         })
       }
+      // function to show the publish container
       function showPublishContainer() {
         document.getElementById('publishTripContainer').style.display = 'block'
         document.getElementById('viewProfileContainer').style.display = 'none'
         document.getElementById('viewTripContainer').style.display = 'none'
       }
-
+      // function to publish a new trip
+      // sends POST request to backend to insert a new trip with the provided details
+      // displays successful alert upon publishing of trip
+      // displays error alert if the field excluding alternate pick-up location provided are empty
       function publishTrip() {
         const pickUpLocation = document.getElementById('pickUpLocation').value
         const altPickUpLocation = document.getElementById('altPickUpLocation').value
@@ -326,6 +351,10 @@
             alert('Error publishing trip: ' + error.message)
           })
       }
+      // function to start trip by changing the status to Active
+      // sends a PUT request to backend to update the status of the specified trip to Active
+      // display successful alert if the trip's status has been change to Active
+      // display error alert if no one has enrolled into that specified trip
       function startTrip(tripID) {
         fetch('http://localhost:5001/api/v1/starttrip/' + tripID, {
           method: 'PUT',
@@ -347,10 +376,16 @@
             alert('At least one Passenger must enroll into this trip first!')
           })
       }
+      // function to show the modal for confirmation of cancel trip while passing the tripID value
       function confirmCancelTrip(tripID) {
         document.getElementById('tripIDspan').innerText = tripID
         document.getElementById('confirmCancelTripModal').style.display = 'block'
       }
+      // function to cancel a trip
+      // sends DELETE request to backend to cancel the specified trip
+      // display successful alrrt if the trip has been canceled
+      // display error alert if the cancellation window is within 30 minutes
+      // e.g if start traveling time is 8:30 pm and the current time in this scenario is 8:05 pm, the car owner cannot cancel the trip
       function cancelTrip() {
         const tripID = document.getElementById('tripIDspan').innerText
         fetch('http://localhost:5001/api/v1/canceltrip/' + tripID, {

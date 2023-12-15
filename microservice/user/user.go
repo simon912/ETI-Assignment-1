@@ -17,13 +17,13 @@ import (
 )
 
 type Users struct {
-	Username     string `json:"Username"`
-	Password     string `json:"Password"`
-	Usergroup    string `json:"User Group"`
-	Firstname    string `json:"First Name"`
-	Lastname     string `json:"Last Name"`
-	MobileNumber int    `json:"Mobile Number"`
-	EmailAddr    string `json:"Email Address"`
+	Username     string         `json:"Username"`
+	Password     string         `json:"Password"`
+	Usergroup    string         `json:"User Group"`
+	Firstname    string         `json:"First Name"`
+	Lastname     string         `json:"Last Name"`
+	MobileNumber int            `json:"Mobile Number"`
+	EmailAddr    string         `json:"Email Address"`
 	LicenseNo    sql.NullInt64  `json:"License Number,omitempty"`
 	PlateNo      sql.NullString `json:"Plate Number,omitempty"`
 	CreationDate string         `json:"Account Creation Date"`
@@ -147,6 +147,7 @@ func userExists(username string) bool {
 	}
 	return count > 0
 }
+
 // Function to Create User, mainly used for Registration of User
 func CreateUser(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)

@@ -1,184 +1,189 @@
 <!-- index.html - the frontend for user to login or register -->
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous" />
-    <link rel="stylesheet" href="style.css" />
-    <title>Car Pooling Trip - Login</title>
-    <style>
-      #loginFormContainer {
-        display: block;
-      }
-      #registerFormContainer {
-        display: none;
-      }
-    </style>
-    <script>
-      // display the login form
-      function showLoginForm() {
-        //change button color
-        document.getElementById('loginButton').style.backgroundColor = '#aaf0ff'
-        document.getElementById('loginButton').style.color = '#ffffff'
-        document.getElementById('registerButton').style.backgroundColor = '#ffffff'
-        document.getElementById('registerButton').style.color = '#000000'
-        //display container
-        document.getElementById('loginFormContainer').style.display = 'block'
-        document.getElementById('registerFormContainer').style.display = 'none'
-        //reset the form field
-        document.getElementById('loginUsername').value = ''
-        document.getElementById('loginPassword').value = ''
-        document.getElementById('loginForm').style.display = 'block'
-      }
-      // display the register form
-      function showRegisterForm() {
-        //change button color
-        document.getElementById('loginButton').style.backgroundColor = '#ffffff'
-        document.getElementById('loginButton').style.color = '#000000'
-        document.getElementById('registerButton').style.backgroundColor = '#aaf0ff'
-        document.getElementById('registerButton').style.color = '#ffffff'
-        //display container
-        document.getElementById('loginFormContainer').style.display = 'none'
-        document.getElementById('registerFormContainer').style.display = 'block'
-        //reset the form field
-        document.getElementById('registerUsername').value = ''
-        document.getElementById('registerPassword').value = ''
-        document.getElementById('registerFirstname').value = ''
-        document.getElementById('registerLastname').value = ''
-        document.getElementById('registerMobilenumber').value = ''
-        document.getElementById('registerEmail').value = ''
-        document.getElementById('registerForm').style.display = 'block'
-      }
-      // function to handle user login
-      // retrieves username and password from the login form and sends a GET request to the backend for authentication
-      // successful login redirects the user depending on what their user group is (passenger, car owner)
-      function loginUser() {
-        const username = document.getElementById('loginUsername').value
-        const enteredPassword = document.getElementById('loginPassword').value
 
-        // Send a GET request to /api/v1/login/{username} endpoint for authentication
-        fetch('http://localhost:5000/api/v1/login/' + username, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous" />
+  <link rel="stylesheet" href="style.css" />
+  <title>Car Pooling Trip - Login</title>
+  <style>
+    #loginFormContainer {
+      display: block;
+    }
+
+    #registerFormContainer {
+      display: none;
+    }
+  </style>
+  <script>
+    // display the login form
+    function showLoginForm() {
+      //change button color
+      document.getElementById('loginButton').style.backgroundColor = '#aaf0ff'
+      document.getElementById('loginButton').style.color = '#ffffff'
+      document.getElementById('registerButton').style.backgroundColor = '#ffffff'
+      document.getElementById('registerButton').style.color = '#000000'
+      //display container
+      document.getElementById('loginFormContainer').style.display = 'block'
+      document.getElementById('registerFormContainer').style.display = 'none'
+      //reset the form field
+      document.getElementById('loginUsername').value = ''
+      document.getElementById('loginPassword').value = ''
+      document.getElementById('loginForm').style.display = 'block'
+    }
+    // display the register form
+    function showRegisterForm() {
+      //change button color
+      document.getElementById('loginButton').style.backgroundColor = '#ffffff'
+      document.getElementById('loginButton').style.color = '#000000'
+      document.getElementById('registerButton').style.backgroundColor = '#aaf0ff'
+      document.getElementById('registerButton').style.color = '#ffffff'
+      //display container
+      document.getElementById('loginFormContainer').style.display = 'none'
+      document.getElementById('registerFormContainer').style.display = 'block'
+      //reset the form field
+      document.getElementById('registerUsername').value = ''
+      document.getElementById('registerPassword').value = ''
+      document.getElementById('registerFirstname').value = ''
+      document.getElementById('registerLastname').value = ''
+      document.getElementById('registerMobilenumber').value = ''
+      document.getElementById('registerEmail').value = ''
+      document.getElementById('registerForm').style.display = 'block'
+    }
+    // function to handle user login
+    // retrieves username and password from the login form and sends a GET request to the backend for authentication
+    // successful login redirects the user depending on what their user group is (passenger, car owner)
+    function loginUser() {
+      const username = document.getElementById('loginUsername').value
+      const enteredPassword = document.getElementById('loginPassword').value
+
+      // Send a GET request to /api/v1/login/{username} endpoint for authentication
+      fetch('http://localhost:5000/api/v1/login/' + username, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+        .then((response) => {
+          if (response.ok) {
+            return response.json() // Assuming your backend sends JSON data on successful authentication
+          } else {
+            throw new Error('Login failed')
+          }
         })
-          .then((response) => {
-            if (response.ok) {
-              return response.json() // Assuming your backend sends JSON data on successful authentication
-            } else {
-              throw new Error('Login failed')
-            }
-          })
-          .then((data) => {
-            // Check if the password from the response matches the entered password
-            if (data) {
-              // Check if the entered password matches the stored password
-              if (data.Password === enteredPassword) {
-                // Check user group and redirect accordingly
-                if (data['User Group'] === 'Passenger') {
-                  window.location.href = 'passenger_home.html?username=' + encodeURIComponent(username)
-                } else if (data['User Group'] === 'Car Owner') {
-                  window.location.href = 'carowner_home.html?username=' + encodeURIComponent(username)
-                } else {
-                  alert('Invalid user group')
-                }
+        .then((data) => {
+          // Check if the password from the response matches the entered password
+          if (data) {
+            // Check if the entered password matches the stored password
+            if (data.Password === enteredPassword) {
+              // Check user group and redirect accordingly
+              if (data['User Group'] === 'Passenger') {
+                window.location.href = 'passenger_home.html?username=' + encodeURIComponent(username)
+              } else if (data['User Group'] === 'Car Owner') {
+                window.location.href = 'carowner_home.html?username=' + encodeURIComponent(username)
               } else {
-                alert('Invalid password, please enter your password again.')
+                alert('Invalid user group')
               }
-            }
-          })
-          .catch((error) => {
-            // Display an error message or handle the error appropriately
-            alert('User does not exist, please register to use our service.')
-          })
-      }
-      // function to handle registration of user
-      // retrieves values from the registration form, validates the input and sends a POST request to the backend for creation of user
-      function registerUser() {
-        // Get values from the registration form
-        const username = document.getElementById('registerUsername').value
-        const password = document.getElementById('registerPassword').value
-        const firstname = document.getElementById('registerFirstname').value
-        const lastname = document.getElementById('registerLastname').value
-        const mobileNumber = document.getElementById('registerMobilenumber').value
-        const email = document.getElementById('registerEmail').value
-        if (username == '' || password == '' || firstname == '' || lastname == '' || mobileNumber == '' || email == '') {
-          alert('Please enter all the field!')
-        }
-        // Send a POST request to /api/v1/register/{username} endpoint for creation of account
-        fetch('http://localhost:5000/api/v1/register/' + username, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            Username: username,
-            Password: password,
-            'First Name': firstname,
-            'Last Name': lastname,
-            'Mobile Number': parseInt(mobileNumber),
-            'Email Address': email,
-          }),
-        })
-          .then((response) => {
-            if (response.ok) {
-              // Successful registration
-              alert('Register successful, you can log in now')
-            } else if (response.status === 409) {
-              // Username conflict
-              alert('Username already in use, please try another username')
             } else {
-              // Handle other errors
-              throw new Error('Registration failed')
+              alert('Invalid password, please enter your password again.')
             }
-          })
-          .catch((error) => {
-            // Handle other errors
-            alert('An error occurred during registration of user.')
-          })
+          }
+        })
+        .catch((error) => {
+          // Display an error message or handle the error appropriately
+          alert('User does not exist, please register to use our service.')
+        })
+    }
+    // function to handle registration of user
+    // retrieves values from the registration form, validates the input and sends a POST request to the backend for creation of user
+    function registerUser() {
+      // Get values from the registration form
+      const username = document.getElementById('registerUsername').value
+      const password = document.getElementById('registerPassword').value
+      const firstname = document.getElementById('registerFirstname').value
+      const lastname = document.getElementById('registerLastname').value
+      const mobileNumber = document.getElementById('registerMobilenumber').value
+      const email = document.getElementById('registerEmail').value
+      if (username == '' || password == '' || firstname == '' || lastname == '' || mobileNumber == '' || email == '') {
+        alert('Please enter all the field!')
       }
-    </script>
-  </head>
-  <body id="indexBody">
-    <h1>Welcome to the Car Pooling Trip Platform!</h1>
-    <h2>
-      You need to login or register to participate
-      <br />
-      in the car pooling service
-    </h2>
-    <div id="formDiv">
-      <div class="btn-group" role="group" id="indexButtonList">
-        <button type="button" class="btn btn-secondary" id="loginButton" onclick="showLoginForm()">Login</button>
-        <button type="button" class="btn btn-secondary" id="registerButton" onclick="showRegisterForm()">Register</button>
-      </div>
-      <div id="loginFormContainer">
-        <form id="loginForm" class="active">
-          <input type="text" id="loginUsername" placeholder="Username" required />
-          <br />
-          <input type="password" id="loginPassword" placeholder="Password " required />
-          <br />
-          <button type="button" onclick="loginUser()">Login</button>
-        </form>
-      </div>
-      <div id="registerFormContainer">
-        <form id="registerForm">
-          <input type="text" id="registerUsername" required placeholder="Username" />
-          <br />
-          <input type="password" id="registerPassword" required placeholder="Password" />
-          <br />
-          <input type="text" id="registerFirstname" required placeholder="First Name" />
-          <br />
-          <input type="text" id="registerLastname" required placeholder="Last Name" />
-          <br />
-          <input type="number" id="registerMobilenumber" required placeholder="Mobile Number" />
-          <br />
-          <input type="text" id="registerEmail" required placeholder="Email Address" />
-          <br />
-          <button type="button" onclick="registerUser()">Register</button>
-        </form>
-      </div>
+      // Send a POST request to /api/v1/register/{username} endpoint for creation of account
+      fetch('http://localhost:5000/api/v1/register/' + username, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          Username: username,
+          Password: password,
+          'First Name': firstname,
+          'Last Name': lastname,
+          'Mobile Number': parseInt(mobileNumber),
+          'Email Address': email,
+        }),
+      })
+        .then((response) => {
+          if (response.ok) {
+            // Successful registration
+            alert('Register successful, you can log in now')
+          } else if (response.status === 409) {
+            // Username conflict
+            alert('Username already in use, please try another username')
+          } else {
+            // Handle other errors
+            throw new Error('Registration failed')
+          }
+        })
+        .catch((error) => {
+          // Handle other errors
+          alert('An error occurred during registration of user.')
+        })
+    }
+  </script>
+</head>
+
+<body id="indexBody">
+  <h1>Welcome to the Car Pooling Trip Platform!</h1>
+  <h2>
+    You need to login or register to participate
+    <br />
+    in the car pooling service
+  </h2>
+  <div id="formDiv">
+    <div class="btn-group" role="group" id="indexButtonList">
+      <button type="button" class="btn btn-secondary" id="loginButton" onclick="showLoginForm()">Login</button>
+      <button type="button" class="btn btn-secondary" id="registerButton" onclick="showRegisterForm()">Register</button>
     </div>
-  </body>
+    <div id="loginFormContainer">
+      <form id="loginForm" class="active">
+        <input type="text" id="loginUsername" placeholder="Username" required />
+        <br />
+        <input type="password" id="loginPassword" placeholder="Password " required />
+        <br />
+        <button type="button" onclick="loginUser()">Login</button>
+      </form>
+    </div>
+    <div id="registerFormContainer">
+      <form id="registerForm">
+        <input type="text" id="registerUsername" required placeholder="Username" />
+        <br />
+        <input type="password" id="registerPassword" required placeholder="Password" />
+        <br />
+        <input type="text" id="registerFirstname" required placeholder="First Name" />
+        <br />
+        <input type="text" id="registerLastname" required placeholder="Last Name" />
+        <br />
+        <input type="number" id="registerMobilenumber" required placeholder="Mobile Number" />
+        <br />
+        <input type="text" id="registerEmail" required placeholder="Email Address" />
+        <br />
+        <button type="button" onclick="registerUser()">Register</button>
+      </form>
+    </div>
+  </div>
+</body>
+
 </html>

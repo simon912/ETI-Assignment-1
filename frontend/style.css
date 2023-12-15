@@ -1,7 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Jost:wght@100&display=swap');
+
 body {
   background-color: #aaf0ff;
 }
+
 #indexBody {
   display: flex;
   flex-direction: column;
@@ -34,6 +36,7 @@ h2 {
   padding: 15px 40px;
   font-weight: bold;
 }
+
 #loginButton {
   background-color: #aaf0ff;
   color: white;
@@ -42,12 +45,14 @@ h2 {
   padding: 15px 40px;
   font-weight: bold;
 }
+
 #indexButtonList {
   position: absolute;
   top: 20px;
   left: 50%;
   transform: translateX(-50%);
 }
+
 button {
   padding: 10px 20px;
   background-color: #aaf0ff;
@@ -69,11 +74,13 @@ button {
   min-height: 550px;
   position: relative;
 }
+
 #loginFormContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
+
 #loginFormContainer input[type='text'],
 #loginFormContainer input[type='password'] {
   border: none;
@@ -127,6 +134,7 @@ button {
   height: 100vh;
   z-index: -1;
 }
+
 #userButtonList {
   display: flex;
   justify-content: center;
@@ -156,6 +164,7 @@ h2 {
   display: flex;
   flex-wrap: wrap;
 }
+
 #viewTripContainer,
 #toggleChronologicalButton {
   margin-bottom: 20px;
@@ -277,6 +286,7 @@ h2 {
 #updateUserForm h3 {
   text-align: center;
 }
+
 #updateUserForm label,
 #updateUserForm input,
 #updateUserForm button {
@@ -355,6 +365,7 @@ h2 {
   max-width: 1200px;
   border: none;
 }
+
 .card-body {
   margin: 0;
   height: 100%;
@@ -406,10 +417,12 @@ h2 {
 #publishTripForm button {
   margin-bottom: 10px;
 }
+
 #publishTripForm h3 {
   text-align: center;
   margin-bottom: 50px;
 }
+
 #publishTripContainer input {
   border: none;
   border-radius: 10px;

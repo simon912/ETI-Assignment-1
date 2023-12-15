@@ -10,9 +10,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment-with-locales.min.js" integrity="sha512-42PE0rd+wZ2hNXftlM78BSehIGzezNeQuzihiBCvUEB3CVxHvsShF86wBWwQORNxNINlBPuq7rG4WWhNiTVHFg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
     <style>
-      #message {
-        display: none;
-      }
       #updateUserContainer,
       #viewProfileContainer,
       #viewTripContainer,
@@ -26,15 +23,6 @@
       const username = urlParams.get('username')
       window.onload = function () {
         retrieveUserData()
-      }
-      function showMessage(message) {
-        const messageContainer = document.getElementById('message')
-        messageContainer.innerHTML = message
-        messageContainer.style.display = 'block'
-
-        setTimeout(() => {
-          messageContainer.style.display = 'none'
-        }, 3000)
       }
       function retrieveUserData() {
         // Send a GET request to /api/v1/user/{username} endpoint for user data
@@ -68,7 +56,7 @@
           })
           .catch((error) => {
             // Display an error message or handle the error appropriately
-            showMessage('Failed to retrieve user data.')
+            alert('Failed to retrieve user data.')
           })
       }
       // For Profile
@@ -102,7 +90,7 @@
           })
           .catch((error) => {
             // Display an error message or handle the error appropriately
-            showMessage('Failed to retrieve user data.')
+            alert('Failed to retrieve user data.')
           })
         document.getElementById('updateUserForm').style.display = 'block'
         document.getElementById('confirmDeleteContainer').style.display = 'none'
@@ -128,9 +116,7 @@
         })
           .then((response) => {
             if (response.ok) {
-              document.getElementById('updateUserForm').style.display = 'none'
-              document.getElementById('message').style.display = 'block'
-              showMessage('User ' + username + "'s info updated successfully")
+              alert('User ' + username + "'s info updated successfully")
             } else {
               throw new Error('User update failed')
             }
@@ -165,18 +151,18 @@
             if (data && data.error) {
               // Display specific error messages based on the server response
               if (data.error.includes('User is not over 1 year old yet')) {
-                showMessage('Delete Error: User is not over 1 year old yet')
+                alert('Delete Error: User is not over 1 year old yet')
               } else if (data.error.includes('User has published a Trip')) {
-                showMessage('Delete Error: User has already published a Trip')
+                alert('Delete Error: User has already published a Trip')
               } else if (data.error.includes('User is enrolled in a Trip')) {
-                showMessage('Delete Error: User is already enrolled in a Trip')
+                alert('Delete Error: User is already enrolled in a Trip')
               } else {
-                showMessage('An error occurred during user deletion.')
+                alert('An error occurred during user deletion.')
               }
             }
           })
           .catch((error) => {
-            showMessage('An error occurred during user deletion.')
+            alert('An error occurred during user deletion.')
           })
       }
 
@@ -185,7 +171,6 @@
         getAllTrips()
         document.getElementById('viewProfileContainer').style.display = 'none'
         document.getElementById('viewTripContainer').style.display = 'block'
-        document.getElementById('message').style.display = 'none'
         document.getElementById('publishTripContainer').style.display = 'none'
         document.getElementById('tripList').style.display = 'block'
         document.getElementById('toggleChronologicalButton').style.display = 'block'
@@ -205,7 +190,6 @@
                 updateTripList(data)
                 document.getElementById('viewTripContainer').style.display = 'block'
                 document.getElementById('viewProfileContainer').style.display = 'none'
-                document.getElementById('message').style.display = 'none'
               } catch (error) {
                 console.error('Error parsing JSON:', error)
               }
@@ -308,6 +292,9 @@
 
         const destinationLocation = document.getElementById('destinationLocation').value
         const passengerNo = parseInt(document.getElementById('passengerNo').value)
+        if (pickUpLocation == '' || timeValue == '' || destinationLocation == '' || passengerNo == '') {
+          alert('Please enter all the field excluding Alternate Pick-Up Location!')
+        }
         const requestBody = {
           'Pick-Up Location': pickUpLocation,
           'Alternate Pick-Up Location': altPickUpLocation,
@@ -331,7 +318,7 @@
             return response.text()
           })
           .then((data) => {
-            showMessage('A new trip has been published.')
+            alert('A new trip has been published.')
           })
           .catch((error) => {
             console.error('Fetch error:', error)
@@ -349,7 +336,6 @@
           .then((response) => {
             if (response.ok) {
               document.getElementById('updateUserForm').style.display = 'none'
-              document.getElementById('message').style.display = 'block'
               alert('Trip ID ' + tripID + "'s status has been changed to Active.")
               location.reload()
             } else {
@@ -372,30 +358,26 @@
           headers: {
             'Content-Type': 'application/json',
           },
-        })
-          .then((response) => {
-            if (response.ok) {
-              document.getElementById('message').style.display = 'block'
-              showMessage('Trip ' + tripID + ' canceled successfully')
-              $('#confirmCancelTripModal').modal('hide')
-              location.reload()
-            } else {
-              return response.json()
-            }
-          })
-          .then((data) => {
-            if (data && data.error) {
-              // Display specific error messages based on the server response
-              if (data.error.includes('Cancellation window is within 30 minutes')) {
-                showMessage('Trip cannot be cancelled. Cancellation window is already within 30 minutes')
+        }).then((response) => {
+          if (response.ok) {
+            alert('Trip ' + tripID + ' canceled successfully')
+            location.reload()
+          } else {
+            return response.json().then((data) => {
+              // Handle error based on data received from the server
+              if (data && data.error) {
+                if (data.error.includes('Cancellation window is within 30 minutes')) {
+                  alert('Trip cannot be cancelled. Cancellation window is already within 30 minutes')
+                } else {
+                  alert('An error occurred during user deletion.')
+                }
               } else {
-                showMessage('An error occurred during user deletion.')
+                // Handle other types of errors
+                alert('An error occurred during the deletion process.')
               }
-            }
-          })
-          .catch((error) => {
-            showMessage('Deletion error')
-          })
+            })
+          }
+        })
       }
     </script>
   </head>
@@ -493,6 +475,5 @@
         </div>
       </div>
     </div>
-    <div id="message"></div>
   </body>
 </html>

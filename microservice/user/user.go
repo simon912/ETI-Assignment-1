@@ -54,14 +54,6 @@ func main() {
 	log.Fatal(http.ListenAndServe(":5000", handler))
 }
 
-// Helper function to handle NULL values in SQL parameters
-func nullOrValue(value interface{}) interface{} {
-	if value == nil {
-		return nil
-	}
-	return value
-}
-
 // Custom unmarshal function for LicenseNumber & PlateNumber
 func (u *Users) UnmarshalJSON(data []byte) error {
 	type Alias Users
@@ -250,8 +242,14 @@ func ChangeToCarOwner(w http.ResponseWriter, r *http.Request) {
 	}
 	defer tx.Rollback()
 
+	// Check if user is enrolled before
+	if isUserReferencedInEnrollment(username) {
+		http.Error(w, `{"error": "User is enrolled in a Trip"}`, http.StatusBadRequest)
+		return
+	}
+
 	query := "UPDATE Users SET UserGroup=?, LicenseNo=?, PlateNo=? WHERE Username=?"
-	_, err = db.Exec(query, "Car Owner", nullOrValue(updateUser.LicenseNo), nullOrValue(updateUser.PlateNo), username)
+	_, err = db.Exec(query, "Car Owner", updateUser.LicenseNo, updateUser.PlateNo, username)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

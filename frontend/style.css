@@ -341,16 +341,18 @@ h2 {
 .trip-item {
   display: inline-block;
   width: calc(33.33% - 2 * 10px);
+  height: 280px;
   margin: 10px;
   box-sizing: border-box;
   padding: 10px;
   border-radius: 15px;
   background-color: white;
+  overflow: hidden;
 }
 
 .card {
   margin: 0 auto;
-  max-width: 1500px;
+  max-width: 1200px;
   border: none;
 }
 .card-body {

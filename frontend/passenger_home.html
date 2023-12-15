@@ -10,9 +10,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment-with-locales.min.js" integrity="sha512-42PE0rd+wZ2hNXftlM78BSehIGzezNeQuzihiBCvUEB3CVxHvsShF86wBWwQORNxNINlBPuq7rG4WWhNiTVHFg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
     <style>
-      #message {
-        display: none;
-      }
       #updateUserContainer,
       #changeCarOwnerContainer,
       #viewTripContainer,
@@ -26,15 +23,6 @@
       const username = urlParams.get('username')
       window.onload = function () {
         retrieveUserData()
-      }
-      function showMessage(message) {
-        const messageContainer = document.getElementById('message')
-        messageContainer.innerHTML = message
-        messageContainer.style.display = 'block'
-
-        setTimeout(() => {
-          messageContainer.style.display = 'none'
-        }, 3000)
       }
       function retrieveUserData() {
         // Send a GET request to /api/v1/user/{username} endpoint for user data
@@ -68,7 +56,7 @@
           })
           .catch((error) => {
             // Display an error message or handle the error appropriately
-            showMessage('Failed to retrieve user data.')
+            alert('Failed to retrieve user data.')
           })
       }
       // For Profile
@@ -102,7 +90,7 @@
           })
           .catch((error) => {
             // Display an error message or handle the error appropriately
-            showMessage('Failed to retrieve user data.')
+            alert('Failed to retrieve user data.')
           })
         document.getElementById('changeCarOwnerContainer').style.display = 'none'
         document.getElementById('confirmDeleteContainer').style.display = 'none'
@@ -138,7 +126,6 @@
         })
           .then((response) => {
             if (response.ok) {
-              document.getElementById('message').style.display = 'block'
               alert('User ' + username + "'s info updated successfully")
             } else {
               throw new Error('User update failed')
@@ -151,6 +138,10 @@
       function changeCarOwner(username) {
         const licenseno = parseInt(document.getElementById('carownerLicenseNo').value)
         const plateno = document.getElementById('carownerCarPlateNo').value
+        if (licenseno == '' || plateno == '') {
+          alert('Please enter all the field!')
+          return
+        }
         fetch('http://localhost:5000/api/v1/changecarowner/' + username, {
           method: 'PUT',
           headers: {
@@ -166,11 +157,20 @@
               alert('User ' + username + ' changed to Car Owner. You will be logged out immediately.')
               window.location.href = 'index.html'
             } else {
-              throw new Error('User update failed')
+              return response.json()
+            }
+          })
+          .then((data) => {
+            if (data && data.error) {
+              if (data.error.includes('User is enrolled in a Trip')) {
+                alert('User is already enrolled in a Trip')
+              } else {
+                alert('Error in updating user group')
+              }
             }
           })
           .catch((error) => {
-            console.error('Error updating user:', error.message)
+            alert('Error in updating user group')
           })
       }
       // Confirmation message for deleting user
@@ -201,18 +201,18 @@
             if (data && data.error) {
               // Display specific error messages based on the server response
               if (data.error.includes('User is not over 1 year old yet')) {
-                showMessage('Delete Error: User is not over 1 year old yet')
+                alert('Delete Error: User is not over 1 year old yet')
               } else if (data.error.includes('User has published a Trip')) {
-                showMessage('Delete Error: User has already published a Trip')
+                alert('Delete Error: User has already published a Trip')
               } else if (data.error.includes('User is enrolled in a Trip')) {
-                showMessage('Delete Error: User is already enrolled in a Trip')
+                alert('Delete Error: User is already enrolled in a Trip')
               } else {
-                showMessage('An error occurred during user deletion.')
+                alert('An error occurred during user deletion.')
               }
             }
           })
           .catch((error) => {
-            showMessage('An error occurred during user deletion.')
+            alert('An error occurred during user deletion.')
           })
       }
 
@@ -221,7 +221,6 @@
         getAllTrips()
         document.getElementById('viewProfileContainer').style.display = 'none'
         document.getElementById('viewTripContainer').style.display = 'block'
-        document.getElementById('message').style.display = 'none'
         document.getElementById('confirmDeleteContainer').style.display = 'none'
       }
       function getAllTrips() {
@@ -239,7 +238,6 @@
                 updateTripList(data)
                 document.getElementById('viewTripContainer').style.display = 'block'
                 document.getElementById('viewProfileContainer').style.display = 'none'
-                document.getElementById('message').style.display = 'none'
               } catch (error) {
                 console.error('Error parsing JSON:', error)
               }
@@ -411,7 +409,5 @@
         </div>
       </div>
     </div>
-
-    <div id="message"></div>
   </body>
 </html>

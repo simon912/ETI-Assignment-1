@@ -77,7 +77,6 @@ func userExists(username string) bool {
 // ----------------------------- Endpoint for Car Pooling Trips ----------------------------------------
 // Function to retrieve all trip with the detail
 func GetAllTrip(w http.ResponseWriter, r *http.Request) {
-	//test case for retrieve all: curl -X GET http://localhost:5000/api/v1/trips
 	db, err := sql.Open("mysql", "user:password@tcp(127.0.0.1:3306)/carpoolingtrip")
 	// handle error
 	if err != nil {

@@ -1,9 +1,7 @@
 # ETI Assignment 1
 
 ### Instruction for setting up and running the microservices
-1. Run the MySQL Script for the Creation of Database and Table as well as Insertion of Records
-
-[ETI-Assignment1-SQLQuery.sql](ETI-Assignment1-SQLQuery.sql)
+1. Run the MySQL Script [ETI-Assignment1-SQLQuery.sql](ETI-Assignment1-SQLQuery.sql) for the Creation of Database and Table as well as Insertion of Records
 
 2. Install the following Go packages
 ```
@@ -15,7 +13,7 @@ go get github.com/gorilla/mux
 ```
 go get github.com/rs/cors
 ```
-3. Run the two microservices (user.go & trip.go) by entering the following command in the command prompt in the project folder's terminal
+3. Run the two microservices ([user.go](microservice/user/user.go) & [trip.go](microservice/trip/trip.go)) by entering the following command in the command prompt in the project folder's terminal
 ```
 cd microservice/trip
 ```
@@ -28,7 +26,7 @@ cd microservice/user
 ```
 go run user.go
 ```
-4. Open index.html
+4. Open [index.html](frontend/index.html)
 
 ### Design Considerations
 The backend is split into two Microservices that do separate functions. Each Microservice has their own role and responsbility to fulfill while being linked to each other.
@@ -39,6 +37,7 @@ The frontend and backend are integrated through the use of REST APIs.
 * No Limit to Trip Vacancy
   * Car Owner can publish a trip with no limit to the vacancy as they themselves would know the vacancy of their vehicle
 * Trip Status
+  * For the purpose of Start Trip feature, each Trip will have the Status that can be Active or Pending.
   * Trip Status will be set to Pending after its published so that Passengers can enroll before the Trip is set to Active by the Car Owner
 * Update User Information
   * Only Mobile Number and Phone Number can be updated by the user

@@ -79,11 +79,13 @@ The following operations as well as the condition for them to work are:
 ### Other external tools or library
 * **moment.js**[^2] for displaying the Date and Time on frontend
 * **Bootstrap**[^3] to enhance the frontend design
+* **Google Fonts**[^4] for Jost font style
 [^2]:https://momentjs.com/
 [^3]:https://getbootstrap.com/
+[^4]:https://fonts.google.com/specimen/Jost?query=jost
 ### Other images used
-* **[index-background.jpg](frontend/images/index-background.jpg)**[^4]
-[^4]:https://www.pexels.com/photo/man-inside-vehicle-13861/
+* **[index-background.jpg](frontend/images/index-background.jpg)**[^5]
+[^5]:https://www.pexels.com/photo/man-inside-vehicle-13861/
 ### Architecture Diagram
 ![architecture_diagram-v2](https://github.com/simon912/ETI-Assignment-1/assets/93958709/4e89fd8e-c6f1-475a-afe0-469da707e88a)
 
